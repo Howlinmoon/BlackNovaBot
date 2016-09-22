@@ -1,0 +1,16 @@
+# Black Nova Example Configuration File
+#
+# for retrieving email
+emailAddress: users@theirdomain
+emailPassword: theuser's password
+emailServer: email server to use
+#
+# for signing in
+UserEmailAddress: this can be the same as above
+ShipName: The bots ship name
+PlayerName: The name of thee bot
+PlayerPassword: The bots password
+#
+
+# The base URL for the server
+baseURL: www.yourserverhere.com/BlackNova/
