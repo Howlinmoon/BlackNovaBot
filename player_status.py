@@ -24,7 +24,7 @@ xColonists     = "html/body/table[2]/tbody/tr/td[3]/table[2]/tbody/tr/td/table/t
 # html/body/table[2]/tbody/tr/td[3]/table[6]/tbody/tr[1]/td/div/table/tbody/tr[3]/td[1]/a
 
 def getStatus():
-    debug = True
+    debug = False
     playerStatus = {}
     if debug:
         print('Querying turns left')
