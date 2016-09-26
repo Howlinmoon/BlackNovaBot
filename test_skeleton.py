@@ -85,7 +85,6 @@ def tradeRouteSearch(zeroPath, sectorDB, maxTurns = 100):
                 scanResults = scanner.lrScan(currentWarp)
                 if debug:
                     print("Scan Results for Sector: {} is: {}".format(currentWarp, scanResults))
-                sectorDB[currentWarp] = scanResults
 
                 if scanResults['port'] == needPort:
                     if debug:
