@@ -19,7 +19,7 @@ import retrieve_settings as settings
 # if it finds one, it returns True, otherwise, it gives up and returns False
 # Pass it how many warps MAX to use (default maximum is 100), and your current Warps To Zero list
 
-def tradeRouteSearch(zeroPath, sectorDB, maxTurns = 100):
+def tradeRouteSearch(zeroPath, warpDB, maxTurns = 100):
     debug = True
     oreSector = -1
     goodsSector = -1
@@ -29,7 +29,7 @@ def tradeRouteSearch(zeroPath, sectorDB, maxTurns = 100):
         if warpsUsed >= maxTurns:
             if debug:
                 print("Exceeded allotted turns")
-                return ["FAILED", sectorDB, zeroPath]
+                return ["FAILED", warpDB, zeroPath]
 
         if debug:
             print("Trying to retrieve player status")
@@ -37,7 +37,7 @@ def tradeRouteSearch(zeroPath, sectorDB, maxTurns = 100):
         warps = playerStatus['warps']
         currentSector = playerStatus['currentSector']
         intWarps = [int(i) for i in warps]
-        sectorDB[int(currentSector)] = intWarps
+        warpDB[int(currentSector)] = intWarps
 
         # Is the player ship in a sector with an Ore or Goods port?
         currentPort = playerStatus['sectorPort']
@@ -85,6 +85,9 @@ def tradeRouteSearch(zeroPath, sectorDB, maxTurns = 100):
                 scanResults = scanner.lrScan(currentWarp)
                 if debug:
                     print("Scan Results for Sector: {} is: {}".format(currentWarp, scanResults))
+                warps = scanResults['links']
+                intWarps = [int(i) for i in warps]
+                warpDB[int(currentWarp)] = intWarps
 
                 if scanResults['port'] == needPort:
                     if debug:
@@ -110,7 +113,7 @@ def tradeRouteSearch(zeroPath, sectorDB, maxTurns = 100):
                             warps = playerStatus['warps']
                             currentSector = playerStatus['currentSector']
                             intWarps = [int(i) for i in warps]
-                            sectorDB[int(currentSector)] = intWarps
+                            warpDB[int(currentSector)] = intWarps
 
                             if debug:
                                 print("Should be able to setup a traderoute between")
@@ -125,7 +128,7 @@ def tradeRouteSearch(zeroPath, sectorDB, maxTurns = 100):
 
                             print("Found a Trade Route!")
                             # Return stuff here
-                            return ['SUCCESS', portSector, sectorDB, zeroPath]
+                            return ['SUCCESS', portSector, warpDB, zeroPath]
 
             if oreSector == -1 or goodsSector == -1:
                 print("Did not find a matching pair - continuing to look")
@@ -134,9 +137,12 @@ def tradeRouteSearch(zeroPath, sectorDB, maxTurns = 100):
                 # need to find the next available sector that is higher than the current one
                 # should handle the situation where the next sector in numerical order, only
                 # leads back to the current one!
+                print('examining warps: {}'.format(warps))
+                print('warpDB: ')
+                print(warpDB)
 
                 for newSector in warps:
-                    newLinks = sectorDB[newSector]['links']
+                    newLinks = warpDB[int(newSector)]
                     if int(newSector) < int(currentSector):
                         continue
                     else:
@@ -167,12 +173,12 @@ def tradeRouteSearch(zeroPath, sectorDB, maxTurns = 100):
                     warps = playerStatus['warps']
                     currentSector = playerStatus['currentSector']
                     intWarps = [int(i) for i in warps]
-                    sectorDB[int(currentSector)] = intWarps
+                    warpDB[int(currentSector)] = intWarps
                     continue
 
 # This routine attempts to move the player to Zero within the allotted move limit
 # returns the updated sector db
-def gotoSectorZero(maxMoves, sectorDB):
+def gotoSectorZero(maxMoves, warpDB):
     print('gotoSectorZero called with maxMoves: {}'.format(maxMoves))
     # Get player status - pull out current sector
     # if current sector == 0, return True
@@ -183,9 +189,9 @@ def gotoSectorZero(maxMoves, sectorDB):
         inSector = playerStatus['currentSector']
         warps = playerStatus['warps']
         intWarps = [int(i) for i in warps]
-        sectorDB[int(inSector)] = intWarps
+        warpDB[int(inSector)] = intWarps
         if inSector == "0":
-            return [True, sectorDB]
+            return [True, warpDB]
         # attempt to move to the first available warp, which will be the closest to zero (theoretically)
         if len(warps) == 0:
             print('We are in a dead end!')
@@ -197,7 +203,7 @@ def gotoSectorZero(maxMoves, sectorDB):
             exit(1)
         maxMoves = maxMoves - 1
     print('Ran out of moves in gotoSectorZero')
-    return [False, sectorDB]
+    return [False, warpDB]
 
 
 
@@ -319,11 +325,11 @@ if not loginResults[0] == "SUCCESS":
 print("Player should now be logged in!")
 
 # Main game loop starts here
-sectorDB = {}
+warpDB = {}
 numberOfSectors = int(gameSettings['Number of Sectors'])
 print("Creating an empty sector warp lookup table, {} sectors worth".format(numberOfSectors))
 for sectorNumber in range(1, numberOfSectors + 1):
-    sectorDB[sectorNumber] = []
+    warpDB[sectorNumber] = []
 
 
 print("Trying to retrieve player status")
@@ -337,12 +343,12 @@ print("Player is currently in sector {}".format(currentSector))
 availableWarps = playerStatus['warps']
 # we just want ints - not strings
 intWarps = [int(i) for i in availableWarps]
-sectorDB[int(currentSector)] = intWarps
+warpDB[int(currentSector)] = intWarps
 if currentSector != '0':
     print('Attempting to move player to sector 0 starting position')
-    returnStatus = gotoSectorZero(100, sectorDB)
+    returnStatus = gotoSectorZero(100, warpDB)
     passOrFail = returnStatus[0]
-    sectorDB = returnStatus[1]
+    warpDB = returnStatus[1]
     print("Found Sector Zero: {}".format(passOrFail))
     if not passOrFail:
         print('Was unable to find sector zero - aborting')
@@ -379,7 +385,7 @@ for moved in range(0, distanceBeforeSearching):
     playerStatus = status.getStatus()
     availableWarps = playerStatus['warps']
     intWarps = [int(i) for i in availableWarps]
-    sectorDB[int(randomWarp)] = intWarps
+    warpDB[int(randomWarp)] = intWarps
     warpsFromZero.append(randomWarp)
     # if we ended up back in port 0, reset warpsFromZero!
     if randomWarp == "0":
@@ -388,17 +394,17 @@ for moved in range(0, distanceBeforeSearching):
 
 print("Starting search for a trade route from: {}".format(randomWarp))
 
-searchResults = tradeRouteSearch(warpsFromZero, sectorDB, 100)
+searchResults = tradeRouteSearch(warpsFromZero, warpDB, 100)
 print("searchResults: {}".format(searchResults))
 searchStatus = searchResults[0]
 if searchStatus != "SUCCESS":
     print("Failed to find a trade route")
     exit(1)
 else:
-    # ['SUCCESS', portSector, sectorDB, zeroPath]
+    # ['SUCCESS', portSector, warpDB, zeroPath]
     print("Attempting to create the trade route linkage")
     portDict = searchResults[1]
-    sectorDb = searchResults[2]
+    warpDB = searchResults[2]
     warpsFromZero = searchResults[3]
     currentSector = warpsFromZero[-1]
     port1 = currentSector
@@ -421,8 +427,8 @@ else:
 print("warps from zero")
 print(warpsFromZero)
 
-print("Sector Database")
-print(sectorDB)
+print("Warp Database")
+print(warpDB)
 
 print("Stopping")
 exit(1)
