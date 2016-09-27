@@ -7,10 +7,11 @@ import options as options
 import player_status as status
 import scan_sector as scanner
 import trade_route as route
-import time
-import random
 import retrieve_settings as settings
 
+import time
+import random
+from tinydb import TinyDB, Query
 # a rudimentary testing framework for bot creation
 
 
@@ -37,7 +38,7 @@ def tradeRouteSearch(zeroPath, warpDB, maxTurns = 100):
         warps = playerStatus['warps']
         currentSector = playerStatus['currentSector']
         intWarps = [int(i) for i in warps]
-        warpDB[int(currentSector)] = intWarps
+        warpDB[currentSector] = intWarps
 
         # Is the player ship in a sector with an Ore or Goods port?
         currentPort = playerStatus['sectorPort']
@@ -77,17 +78,20 @@ def tradeRouteSearch(zeroPath, warpDB, maxTurns = 100):
                 goodsSector = int(currentSector)
                 needPort = "Ore"
 
+            warps = playerStatus['warps']
+            currentSector = playerStatus['currentSector']
             if debug:
                 print("Checking to see if a neighboring sector contains a trading match")
-            warps = playerStatus['warps']
+                print("We should currently be in sector: {}".format(currentSector))
+                print("Available warps: {}".format(warps))
 
             for currentWarp in warps:
                 scanResults = scanner.lrScan(currentWarp)
                 if debug:
                     print("Scan Results for Sector: {} is: {}".format(currentWarp, scanResults))
-                warps = scanResults['links']
-                intWarps = [int(i) for i in warps]
-                warpDB[int(currentWarp)] = intWarps
+                scannedWarps = scanResults['links']
+                intWarps = [int(i) for i in scannedWarps]
+                warpDB[currentWarp] = intWarps
 
                 if scanResults['port'] == needPort:
                     if debug:
@@ -113,7 +117,7 @@ def tradeRouteSearch(zeroPath, warpDB, maxTurns = 100):
                             warps = playerStatus['warps']
                             currentSector = playerStatus['currentSector']
                             intWarps = [int(i) for i in warps]
-                            warpDB[int(currentSector)] = intWarps
+                            warpDB[currentSector] = intWarps
 
                             if debug:
                                 print("Should be able to setup a traderoute between")
@@ -142,7 +146,7 @@ def tradeRouteSearch(zeroPath, warpDB, maxTurns = 100):
                 print(warpDB)
 
                 for newSector in warps:
-                    newLinks = warpDB[int(newSector)]
+                    newLinks = warpDB[newSector]
                     if int(newSector) < int(currentSector):
                         continue
                     else:
@@ -173,7 +177,7 @@ def tradeRouteSearch(zeroPath, warpDB, maxTurns = 100):
                     warps = playerStatus['warps']
                     currentSector = playerStatus['currentSector']
                     intWarps = [int(i) for i in warps]
-                    warpDB[int(currentSector)] = intWarps
+                    warpDB[currentSector] = intWarps
                     continue
 
 # This routine attempts to move the player to Zero within the allotted move limit
@@ -189,7 +193,7 @@ def gotoSectorZero(maxMoves, warpDB):
         inSector = playerStatus['currentSector']
         warps = playerStatus['warps']
         intWarps = [int(i) for i in warps]
-        warpDB[int(inSector)] = intWarps
+        warpDB[inSector] = intWarps
         if inSector == "0":
             return [True, warpDB]
         # attempt to move to the first available warp, which will be the closest to zero (theoretically)
@@ -324,12 +328,25 @@ if not loginResults[0] == "SUCCESS":
 
 print("Player should now be logged in!")
 
+# create a player DB reference based on the name of the bot
+db = TinyDB("{}.db".format(playerName))
+
+# retrieve the warpDB if present
+if len(db.all()):
+    print("Retrieving saved Warp DB")
+    dbType = Query()
+    results = db.search(dbType.type == 'warpDB')
+    warpDB = results[0]['database']
+else:
+    print("Initializing a new Warp DB")
+    warpDB = {}
+    numberOfSectors = int(gameSettings['Number of Sectors'])
+    print("Creating an empty sector warp lookup table, {} sectors worth".format(numberOfSectors))
+    for sectorNumber in range(1, numberOfSectors + 1):
+        warpDB[str(sectorNumber)] = []
+
+
 # Main game loop starts here
-warpDB = {}
-numberOfSectors = int(gameSettings['Number of Sectors'])
-print("Creating an empty sector warp lookup table, {} sectors worth".format(numberOfSectors))
-for sectorNumber in range(1, numberOfSectors + 1):
-    warpDB[sectorNumber] = []
 
 
 print("Trying to retrieve player status")
@@ -343,7 +360,7 @@ print("Player is currently in sector {}".format(currentSector))
 availableWarps = playerStatus['warps']
 # we just want ints - not strings
 intWarps = [int(i) for i in availableWarps]
-warpDB[int(currentSector)] = intWarps
+warpDB[currentSector] = intWarps
 if currentSector != '0':
     print('Attempting to move player to sector 0 starting position')
     returnStatus = gotoSectorZero(100, warpDB)
@@ -385,7 +402,7 @@ for moved in range(0, distanceBeforeSearching):
     playerStatus = status.getStatus()
     availableWarps = playerStatus['warps']
     intWarps = [int(i) for i in availableWarps]
-    warpDB[int(randomWarp)] = intWarps
+    warpDB[randomWarp] = intWarps
     warpsFromZero.append(randomWarp)
     # if we ended up back in port 0, reset warpsFromZero!
     if randomWarp == "0":
@@ -431,4 +448,6 @@ print("Warp Database")
 print(warpDB)
 
 print("Stopping")
+
+db.insert({'type': 'warpDB', 'database': warpDB})
 exit(1)
