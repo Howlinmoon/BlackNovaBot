@@ -394,6 +394,9 @@ print(playerStatus)
 
 currentSector = playerStatus['currentSector']
 print("Player is currently in sector {}".format(currentSector))
+
+tradeRoutes = route.retrieveRoutes()
+
 availableWarps = playerStatus['warps']
 # we just want ints - not strings
 intWarps = [int(i) for i in availableWarps]
@@ -481,7 +484,6 @@ if searchStatus != "SUCCESS":
     exit(1)
 else:
     # ['SUCCESS', portSector, warpDB, zeroPath]
-    print("Attempting to create the trade route linkage")
     portDict = searchResults[1]
     warpDB = searchResults[2]
     warpsFromZero = searchResults[3]
@@ -496,12 +498,27 @@ else:
     else:
         print('Whoah! - Something is wrong here...')
         exit(1)
+    makePort = True
+    if len(tradeRoutes):
+        for eachRoute in tradeRoutes:
+            origPort1 = eachRoute[0]
+            origPort2 = eachRoute[2]
+            if orePort == origPort1 or orePort == origPort2:
+                print('Port is already in a route')
+                makePort = False
+                break
+    if makePort:
+        print("Attempting to create the trade route linkage")
+        trCreateStatus = route.createRoute(port1, port2, bidir=True , warp=True)
+        if trCreateStatus:
+            print("Successfully created a trade route!")
+            # update the trade routes
+            tradeRoutes = route.retrieveRoutes()
+        else:
+            print("Was unable to create the specified trade route")
+            exit(1)
 
-    trCreateStatus = route.createRoute(port1, port2, bidir=True , warp=True)
-    if trCreateStatus:
-        print("Successfully created a trade route!")
-    else:
-        print("Was unable to create the specified trade route")
+
 
 shortestPath = find_shortest_path(warpDB, currentSector, '0')
 print("warps from zero")

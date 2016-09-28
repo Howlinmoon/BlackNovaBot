@@ -98,7 +98,7 @@ def routeOptions(colonists = True, fighters = False, torpedoes = False, keepEner
     # retrieve the current page
     currentPage = bnw.getPage()
     baseURL = ('/').join(currentPage.split('/')[:-1])
-    optionPage = "http://{}/traderoute.php?command=settings".format(baseURL)
+    optionPage = "{}/traderoute.php?command=settings".format(baseURL)
     bnw.loadPage(optionPage)
     time.sleep(2)
     bannerText = bnw.textFromElement(xBanner)
@@ -175,55 +175,75 @@ def routeOptions(colonists = True, fighters = False, torpedoes = False, keepEner
 
 # retrieve the currently configured trade routes (if any)
 def retrieveRoutes():
+    debug = False
     # XPaths
     xBanner = "html/body/h1"
-    # Route 1 Source
-    # html/body/table/tbody/tr[3]/td[1]/font/a
-    # Route 1 Source Type
-    # html/body/table/tbody/tr[3]/td[2]/font
-    # Route 1 Destination
-    # html/body/table/tbody/tr[3]/td[3]/font/a
-    # Route 1 Destination Type
-    # html/body/table/tbody/tr[3]/td[4]/font
-    # Route 1 Distance
-    # html/body/table/tbody/tr[3]/td[5]/font
-    # Route 1 Circuit
-    # html/body/table/tbody/tr[3]/td[6]/font
-    # Route 1 Edit
-    # html/body/table/tbody/tr[3]/td[7]/font/a[1]
-    # Route 1 Delete
-    # html/body/table/tbody/tr[3]/td[7]/font/a[2]
-
-    # Route 2 Source
-    # html/body/table/tbody/tr[4]/td[1]/font/a
-    # Route 2 Source Type
-    # html/body/table/tbody/tr[4]/td[2]/font
-    # Route 2 Destination
-    # html/body/table/tbody/tr[4]/td[3]/font/a
-    # Route 2 Destination Type
-    # html/body/table/tbody/tr[4]/td[4]/font
-    # Route 2 Distance
-    # html/body/table/tbody/tr[4]/td[5]/font
-    # Route 2 Circuit
-    # html/body/table/tbody/tr[4]/td[6]/font
-    # Route 2 Edit
-    # html/body/table/tbody/tr[4]/td[7]/font/a[1]
-    # Route 2 Delete
-    # html/body/table/tbody/tr[4]/td[7]/font/a[2]
-
+    routeList = []
+    xAnyPorts = "html/body/table/tbody/tr[3]/td[1]/font"
 
     # retrieve the current page
     currentPage = bnw.getPage()
+    print('currentPage: {}'.format(currentPage))
     baseURL = ('/').join(currentPage.split('/')[:-1])
-    routePage = "http://{}/traderoute.php".format(baseURL)
+    routePage = "{}/traderoute.php".format(baseURL)
+    mainPage = "{}/main.php".format(baseURL)
+
+    print('attempting to load routePage: {}'.format(routePage))
     bnw.loadPage(routePage)
     time.sleep(2)
     bannerText = bnw.textFromElement(xBanner)
     if bannerText == "DONTEXIST":
-        print("Unable to load the trade options page")
+        print("Unable to load the trade routes page")
         exit(1)
     elif not bannerText == "Trade Routes":
         print("Unexpected banner text: {}, was looking for 'Trade Routes'".format(bannerText))
         exit(1)
     if debug:
-        print("Trade Route option page successfully loaded")
+        print("Trade Routes page successfully loaded")
+
+    # check and see if there are any routes to retrieve
+    checkText = bnw.textFromElement(xAnyPorts)
+    if not "Port" in checkText and not "Planet" in checkText:
+        if debug:
+            print("There are currently no established trade routes")
+        # reload the main page
+        bnw.loadPage(mainPage)
+        return routeList
+    if debug:
+        print("There are one or more trade routes to retrieve")
+
+    routeIndex = 2
+    routeNumber = 0
+    while True:
+        routeNumber += 1
+        routeIndex += 1
+        xSource      = "html/body/table/tbody/tr[{}]/td[1]/font/a".format(routeIndex)
+        xSourceType  = "html/body/table/tbody/tr[{}]/td[2]/font".format(routeIndex)
+        xDestination = "html/body/table/tbody/tr[{}]/td[3]/font/a".format(routeIndex)
+        xDestType    = "html/body/table/tbody/tr[{}]/td[4]/font".format(routeIndex)
+        xDistance    = "html/body/table/tbody/tr[{}]/td[5]/font".format(routeIndex)
+        xCircuit     = "html/body/table/tbody/tr[{}]/td[6]/font".format(routeIndex)
+        xEdit        = "html/body/table/tbody/tr[{}]/td[7]/font/a[1]".format(routeIndex)
+        xDelete      = "html/body/table/tbody/tr[{}]/td[7]/font/a[2]".format(routeIndex)
+
+        sourcePort = bnw.textFromElement(xSource)
+        if sourcePort == "DONTEXIST":
+            if debug:
+                print('Done retrieving trade routes')
+
+            # reload the main page
+            bnw.loadPage(mainPage)
+            return routeList
+
+        sourceType = bnw.textFromElement(xSourceType)
+        destPort = bnw.textFromElement(xDestination)
+        destType = bnw.textFromElement(xDestType)
+        distance = bnw.textFromElement(xDistance)
+        circuit  = bnw.textFromElement(xCircuit)
+        editLink = bnw.textFromElement(xEdit)
+        delLink  = bnw.textFromElement(xDelete)
+
+        print('Route #{} From: {} (type: {}) To: {} (type: {})'.format(routeNumber, sourcePort, sourceType, destPort, destType))
+        print("Distance: {}, Circuit Type: {}, edit: {}, delete: {}".format(distance, circuit, editLink, delLink))
+        newRoute = [sourcePort, sourceType, destPort, destType, distance, circuit, editLink, delLink]
+        routeList.append(newRoute)

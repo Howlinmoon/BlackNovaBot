@@ -59,8 +59,11 @@ of trade routes.
 Refactored the search routine into a function, and added a call to the create trade route
 routine.  Have to add a check to see if the creation succeeded or not.
 
-2015/09/22 - Updated Trade Route module to confirm creation of Trade Routes
+2016/09/22 - Updated Trade Route module to confirm creation of Trade Routes
 Trade Route module can now retrieve currently created trade routes
 In the process of creating a "get out of Dodge" feature where it will send the Bot X amount of moves away
 from Zero using random warps prior to searching for a trade route.
 This will keep all of the bots (hopefully) finding and establishing the same routes
+
+2016/09/28 - Now retrieves existing trade routes to hopefully prevent re-creating existing ones
+Implemented a simple path finding mechanism to find the most efficient route between sectors
