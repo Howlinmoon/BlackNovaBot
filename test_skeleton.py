@@ -38,7 +38,7 @@ def tradeRouteSearch(zeroPath, warpDB, maxTurns = 100):
         warps = playerStatus['warps']
         currentSector = playerStatus['currentSector']
         intWarps = [int(i) for i in warps]
-        warpDB[currentSector] = intWarps
+        warpDB[currentSector] = warps
 
         # Is the player ship in a sector with an Ore or Goods port?
         currentPort = playerStatus['sectorPort']
@@ -91,7 +91,7 @@ def tradeRouteSearch(zeroPath, warpDB, maxTurns = 100):
                     print("Scan Results for Sector: {} is: {}".format(currentWarp, scanResults))
                 scannedWarps = scanResults['links']
                 intWarps = [int(i) for i in scannedWarps]
-                warpDB[currentWarp] = intWarps
+                warpDB[currentWarp] = scannedWarps
 
                 if scanResults['port'] == needPort:
                     if debug:
@@ -117,7 +117,7 @@ def tradeRouteSearch(zeroPath, warpDB, maxTurns = 100):
                             warps = playerStatus['warps']
                             currentSector = playerStatus['currentSector']
                             intWarps = [int(i) for i in warps]
-                            warpDB[currentSector] = intWarps
+                            warpDB[currentSector] = warps
 
                             if debug:
                                 print("Should be able to setup a traderoute between")
@@ -177,7 +177,7 @@ def tradeRouteSearch(zeroPath, warpDB, maxTurns = 100):
                     warps = playerStatus['warps']
                     currentSector = playerStatus['currentSector']
                     intWarps = [int(i) for i in warps]
-                    warpDB[currentSector] = intWarps
+                    warpDB[currentSector] = warps
                     continue
 
 # This routine attempts to move the player to Zero within the allotted move limit
@@ -193,7 +193,7 @@ def gotoSectorZero(maxMoves, warpDB):
         inSector = playerStatus['currentSector']
         warps = playerStatus['warps']
         intWarps = [int(i) for i in warps]
-        warpDB[inSector] = intWarps
+        warpDB[inSector] = warps
         if inSector == "0":
             return [True, warpDB]
         # attempt to move to the first available warp, which will be the closest to zero (theoretically)
@@ -209,6 +209,43 @@ def gotoSectorZero(maxMoves, warpDB):
     print('Ran out of moves in gotoSectorZero')
     return [False, warpDB]
 
+# This routine attempts to navigate the supplied sectors
+# returns True if it succeeds, False if it is unable to comply
+def moveVia(path):
+    print('moveVia called with path: {}'.format(path))
+    for eachSector in path:
+        print("moveVia is attempting to move to sector: {}".format(eachSector))
+        if not bnw.moveTo(eachSector):
+            print("Was unable to move to the desired sector: {}".format(eachSector))
+            return False
+    # assume we made it
+    return True
+
+# A rudimentary shortest path calculator
+# found here:  https://www.python.org/doc/essays/graphs/
+def find_shortest_path(graph, start, end, path=[]):
+    debug = False
+    if path ==[]:
+        # initial entry into the function
+        if debug:
+            print("Trying to find path from {} to {}".format(start, end))
+    else:
+        # function called itself
+        if debug:
+            print("Recursively - path is now: {}".format(path))
+    path = path + [start]
+    if start == end:
+        return path
+    if not start in graph:
+        return None
+    shortest = None
+    for node in graph[start]:
+        if node not in path:
+            newpath = find_shortest_path(graph, node, end, path)
+            if newpath:
+                if not shortest or len(newpath) < len(shortest):
+                    shortest = newpath
+    return shortest
 
 
 ###########################################################
@@ -360,16 +397,31 @@ print("Player is currently in sector {}".format(currentSector))
 availableWarps = playerStatus['warps']
 # we just want ints - not strings
 intWarps = [int(i) for i in availableWarps]
-warpDB[currentSector] = intWarps
+warpDB[currentSector] = availableWarps
 if currentSector != '0':
-    print('Attempting to move player to sector 0 starting position')
-    returnStatus = gotoSectorZero(100, warpDB)
-    passOrFail = returnStatus[0]
-    warpDB = returnStatus[1]
-    print("Found Sector Zero: {}".format(passOrFail))
-    if not passOrFail:
-        print('Was unable to find sector zero - aborting')
-        exit(1)
+    shortestPath = find_shortest_path(warpDB, currentSector, '0')
+    if shortestPath != None:
+        print("Best Path to sector 0")
+        print(shortestPath)
+        print('Using the new "moveVia" function')
+        # remove the first sector, which is where we are currently
+        shortestPath.pop(0)
+        if moveVia(shortestPath):
+            print('Successfully moved to sector 0!')
+        else:
+            print('Something happened attempting to move to sector 0')
+            exit(1)
+
+    else:
+        print('There is no known path from {} to sector 0'.format(currentSector))
+        print('Attempting to move player to sector 0 starting position')
+        returnStatus = gotoSectorZero(100, warpDB)
+        passOrFail = returnStatus[0]
+        warpDB = returnStatus[1]
+        print("Found Sector Zero: {}".format(passOrFail))
+        if not passOrFail:
+            print('Was unable to find sector zero - aborting')
+            exit(1)
 
 # at this point, the bot is in sector zero
 warpsFromZero = []
@@ -380,7 +432,7 @@ distanceBeforeSearching = 10
 
 
 print("#######\n##########\nAttempting to move {} sectors away from Zero before looking for a trade route".format(distanceBeforeSearching))
-for moved in range(0, distanceBeforeSearching):
+while True:
     playerStatus = status.getStatus()
     print("Player Status:")
     print(playerStatus)
@@ -401,13 +453,23 @@ for moved in range(0, distanceBeforeSearching):
         exit(1)
     playerStatus = status.getStatus()
     availableWarps = playerStatus['warps']
-    intWarps = [int(i) for i in availableWarps]
-    warpDB[randomWarp] = intWarps
+    warpDB[randomWarp] = availableWarps
     warpsFromZero.append(randomWarp)
     # if we ended up back in port 0, reset warpsFromZero!
     if randomWarp == "0":
         print('Ended up back in 0, resetting warpsFromZero')
         warpsFromZero = []
+    currentPath = find_shortest_path(warpDB, randomWarp, '0')
+    if currentPath == None:
+        print("Went through a one way warp - we're lost!".format(randomWarp))
+        break
+    howFar = len(currentPath)
+    print("We are now {} jumps from zero".format(howFar))
+    if howFar == 10:
+        print("That's far enough!")
+        break
+    else:
+        print("Still need to move further away!")
 
 print("Starting search for a trade route from: {}".format(randomWarp))
 
@@ -441,8 +503,9 @@ else:
     else:
         print("Was unable to create the specified trade route")
 
+shortestPath = find_shortest_path(warpDB, currentSector, '0')
 print("warps from zero")
-print(warpsFromZero)
+print(shortestPath)
 
 print("Warp Database")
 print(warpDB)
