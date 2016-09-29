@@ -224,7 +224,6 @@ def retrieveRoutes():
         xDistance    = "html/body/table/tbody/tr[{}]/td[5]/font".format(routeIndex)
         xCircuit     = "html/body/table/tbody/tr[{}]/td[6]/font".format(routeIndex)
         xEdit        = "html/body/table/tbody/tr[{}]/td[7]/font/a[1]".format(routeIndex)
-        xDelete      = "html/body/table/tbody/tr[{}]/td[7]/font/a[2]".format(routeIndex)
 
         sourcePort = bnw.textFromElement(xSource)
         if sourcePort == "DONTEXIST":
@@ -240,10 +239,17 @@ def retrieveRoutes():
         destType = bnw.textFromElement(xDestType)
         distance = bnw.textFromElement(xDistance)
         circuit  = bnw.textFromElement(xCircuit)
-        editLink = bnw.textFromElement(xEdit)
-        delLink  = bnw.textFromElement(xDelete)
+        editLink = bnw.linkFromElement(xEdit)
+        routeId = editLink.split('=')[-1]
 
         print('Route #{} From: {} (type: {}) To: {} (type: {})'.format(routeNumber, sourcePort, sourceType, destPort, destType))
-        print("Distance: {}, Circuit Type: {}, edit: {}, delete: {}".format(distance, circuit, editLink, delLink))
-        newRoute = [sourcePort, sourceType, destPort, destType, distance, circuit, editLink, delLink]
+        print("Distance: {}, Circuit Type: {}, Route Id: {}".format(distance, circuit, routeId))
+        newRoute = [sourcePort, sourceType, destPort, destType, distance, circuit, routeId]
         routeList.append(newRoute)
+
+
+# For Edit Route
+#  /traderoute.php?command=edit&traderoute_id=XX
+
+# For Delete Route
+#  /traderoute.php?command=delete&traderoute_id=Xx

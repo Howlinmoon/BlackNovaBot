@@ -63,7 +63,11 @@ routine.  Have to add a check to see if the creation succeeded or not.
 Trade Route module can now retrieve currently created trade routes
 In the process of creating a "get out of Dodge" feature where it will send the Bot X amount of moves away
 from Zero using random warps prior to searching for a trade route.
-This will keep all of the bots (hopefully) finding and establishing the same routes
+This will keep all of the bots (hopefully) from finding and establishing the same routes
 
-2016/09/28 - Now retrieves existing trade routes to hopefully prevent re-creating existing ones
+2016/09/28 - Now retrieves existing trade routes to prevent re-creating existing ones
 Implemented a simple path finding mechanism to find the most efficient route between sectors
+
+2016/09/29 - Using proper tables in tinyDB instead of the default
+Chasing a bug where on startup - the Bot is unable to find the shortest path to zero, even though
+when it previously shut down - there was one...

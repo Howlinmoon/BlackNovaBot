@@ -217,6 +217,26 @@ def textFromElement(xpath):
             time.sleep(2)
             continue
 
+# a routine that returns the href contents from an element if it exists, otherwise 'DONTEXIST'
+# assumes it is being passed an xpath
+# 2016/02/24 - added stale element exception protection
+def linkFromElement(xpath):
+    # print("Checking on xpath: {}".format(xpath))
+    while True:
+        try:
+            # first - verify it actually exists
+            if not elementExists(xpath):
+                print("elementExists says the xpath does not exist")
+                return "DONTEXIST"
+            elem = driver.find_element_by_xpath(xpath)
+            linkText = elem.get_attribute('href')
+            return linkText
+        except StaleElementReferenceException:
+            print("textFromElement caught a stale element exception, trying again in 2 seconds")
+            time.sleep(2)
+            continue
+
+
 # set the browser window size
 def setWindowSize(height, width):
     driver.set_window_size(height, width)

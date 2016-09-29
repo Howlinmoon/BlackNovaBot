@@ -37,7 +37,6 @@ def tradeRouteSearch(zeroPath, warpDB, maxTurns = 100):
         playerStatus = status.getStatus()
         warps = playerStatus['warps']
         currentSector = playerStatus['currentSector']
-        intWarps = [int(i) for i in warps]
         warpDB[currentSector] = warps
 
         # Is the player ship in a sector with an Ore or Goods port?
@@ -367,13 +366,14 @@ print("Player should now be logged in!")
 
 # create a player DB reference based on the name of the bot
 db = TinyDB("{}.db".format(playerName))
+warpsTable = db.table('warps')
+warpDB = warpsTable.all()
+print("length of warpDB: {} ".format(len(warpDB)))
 
 # retrieve the warpDB if present
-if len(db.all()):
+if len(warpDB):
     print("Retrieving saved Warp DB")
-    dbType = Query()
-    results = db.search(dbType.type == 'warpDB')
-    warpDB = results[0]['database']
+    warpDB = warpDB[0]
 else:
     print("Initializing a new Warp DB")
     warpDB = {}
@@ -500,6 +500,7 @@ else:
         exit(1)
     makePort = True
     if len(tradeRoutes):
+        print("Checking to see if proposed route is already created...")
         for eachRoute in tradeRoutes:
             origPort1 = eachRoute[0]
             origPort2 = eachRoute[2]
@@ -527,7 +528,7 @@ print(shortestPath)
 print("Warp Database")
 print(warpDB)
 
-print("Stopping")
+print("Saving the warpDB")
+warpsTable.insert(warpDB)
 
-db.insert({'type': 'warpDB', 'database': warpDB})
 exit(1)
