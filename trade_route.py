@@ -247,6 +247,170 @@ def retrieveRoutes():
         newRoute = [sourcePort, sourceType, destPort, destType, distance, circuit, routeId]
         routeList.append(newRoute)
 
+# This routine starts searching for an optimal trade route from the
+# current sector.
+# if it finds one, it returns True, otherwise, it gives up and returns False
+# Pass it how many warps MAX to use (default maximum is 100), and your current Warps To Zero list
+
+def tradeRouteSearch(zeroPath, warpDB, maxTurns=100):
+    debug = True
+    oreSector = -1
+    goodsSector = -1
+    portSector = {}
+    warpsUsed = 0
+    while True:
+        if warpsUsed >= maxTurns:
+            if debug:
+                print("Exceeded allotted turns")
+                return ["FAILED", warpDB, zeroPath]
+
+        if debug:
+            print("Trying to retrieve player status")
+        playerStatus = status.getStatus()
+        warps = playerStatus['warps']
+        currentSector = playerStatus['currentSector']
+        warpDB[currentSector] = warps
+
+        # Is the player ship in a sector with an Ore or Goods port?
+        currentPort = playerStatus['sectorPort']
+        if debug:
+            print("currentPort: {}".format(currentPort))
+        if currentPort != "Ore" and currentPort != "Goods":
+            if debug:
+                print("Current sector: {} does not have a desired port - need to move".format(currentSector))
+            # need to find the next available sector that is higher than the current one
+            for newSector in warps:
+                if int(newSector) < int(currentSector):
+                    continue
+                else:
+                    break
+
+            if debug:
+                print("Attempting to move to sector: {}".format(newSector))
+            if not bnw.moveTo(newSector):
+                print("Was unable to move to the desired sector: {}".format(newSector))
+                exit(1)
+            else:
+                if debug:
+                    print("Successfully moved to the desired sector")
+                zeroPath.append(newSector)
+                warpsUsed += 1
+                continue
+
+        else:
+            if debug:
+                print("Current sector has a desired port!")
+            portSector[currentPort] = int(currentSector)
+
+            if currentPort == "Ore":
+                oreSector = int(currentSector)
+                needPort = "Goods"
+            else:
+                goodsSector = int(currentSector)
+                needPort = "Ore"
+
+            warps = playerStatus['warps']
+            currentSector = playerStatus['currentSector']
+            if debug:
+                print("Checking to see if a neighboring sector contains a trading match")
+                print("We should currently be in sector: {}".format(currentSector))
+                print("Available warps: {}".format(warps))
+
+            for currentWarp in warps:
+                scanResults = scanner.lrScan(currentWarp)
+                if debug:
+                    print("Scan Results for Sector: {} is: {}".format(currentWarp, scanResults))
+                scannedWarps = scanResults['links']
+                intWarps = [int(i) for i in scannedWarps]
+                warpDB[currentWarp] = scannedWarps
+
+                if scanResults['port'] == needPort:
+                    if debug:
+                        print('Found a possible {} port: {}'.format(needPort, currentWarp))
+                    # does this warp allow return to this sector?
+                    if not currentSector in scanResults['links']:
+                        if debug:
+                            print('{} Port has no return link to the current sector'.format(needPort))
+                        continue
+                    else:
+                        if debug:
+                            print('{} Port has a return link to the current sector'.format(needPort))
+                            print("Attempting to move to {} sector: {}".format(needPort, currentWarp))
+                        if not bnw.moveTo(currentWarp):
+                            print("Was unable to move to the desired sector")
+                            exit(1)
+                        else:
+                            warpsUsed += 1
+                            if debug:
+                                print("Successfully moved to the desired sector")
+                            portSector[needPort] = int(currentWarp)
+                            playerStatus = status.getStatus()
+                            warps = playerStatus['warps']
+                            currentSector = playerStatus['currentSector']
+                            intWarps = [int(i) for i in warps]
+                            warpDB[currentSector] = warps
+
+                            if debug:
+                                print("Should be able to setup a traderoute between")
+                                print("Goods Port: {} and Ore Port: {}".format(portSector["Goods"],
+                                                                               portSector["Ore"]))
+                            prevSector = zeroPath[-1]
+                            if debug:
+                                print("Returning to previous sector:{} ".format(prevSector))
+                            if not bnw.moveTo(prevSector):
+                                print("Was unable to move to the previous sector: {}".format(prevSector))
+                                exit(1)
+                            warpsUsed += 1
+
+                            print("Found a Trade Route!")
+                            # Return stuff here
+                            return ['SUCCESS', portSector, warpDB, zeroPath]
+
+            if oreSector == -1 or goodsSector == -1:
+                print("Did not find a matching pair - continuing to look")
+                oreSector = -1
+                goodsSector = -1
+                # need to find the next available sector that is higher than the current one
+                # should handle the situation where the next sector in numerical order, only
+                # leads back to the current one!
+                print('examining warps: {}'.format(warps))
+                print('warpDB: ')
+                print(warpDB)
+
+                for newSector in warps:
+                    newLinks = warpDB[newSector]
+                    if int(newSector) < int(currentSector):
+                        continue
+                    else:
+                        print("considering moving to sector: {}".format(newSector))
+                        print("it has links to: {}".format(newLinks))
+                        # verify at least one of the links isn't back to here...
+                        goodCheck = False
+                        for linkCheck in newLinks:
+                            if linkCheck != currentSector:
+                                print("Found at least one link to someplace other than current sector")
+                                goodCheck = True
+
+                        if not goodCheck:
+                            print("We have a problem, search algo would send us back to the current sector!")
+                            exit(1)
+                        # otherwise, we good to go with this new sector
+                        break
+
+                print("Attempting to move to sector: {}".format(newSector))
+                if not bnw.moveTo(newSector):
+                    print("Was unable to move to the desired sector")
+                    exit(1)
+                else:
+                    print("Successfully moved to the desired sector")
+                    zeroPath.append(newSector)
+                    warpsUsed += 1
+                    playerStatus = status.getStatus()
+                    warps = playerStatus['warps']
+                    currentSector = playerStatus['currentSector']
+                    intWarps = [int(i) for i in warps]
+                    warpDB[currentSector] = warps
+                    continue
 
 # For Edit Route
 #  /traderoute.php?command=edit&traderoute_id=XX
