@@ -71,3 +71,17 @@ Implemented a simple path finding mechanism to find the most efficient route bet
 2016/09/29 - Using proper tables in tinyDB instead of the default
 Chasing a bug where on startup - the Bot is unable to find the shortest path to zero, even though
 when it previously shut down - there was one...
+
+2016/10/03 - Working on selecting an initial trade route to start trading. (if present)
+Modified rsmove.php to ALWAYS ask the player if they want to real space move to a trade route sector -
+regardless of the distance.
+
+```
+Original code for line 84:
+
+elseif (($destination < $sector_max && empty($engage)) || ($destination < $sector_max && $triptime > 100 && $engage == 1))
+
+Modified code for line 84:
+
+elseif (($destination < $sector_max && empty($engage)) || ($destination < $sector_max && $triptime > 0 && $engage == 1))
+```

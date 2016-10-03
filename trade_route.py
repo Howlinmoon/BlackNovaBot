@@ -1,5 +1,8 @@
 import support_lib as bnw
+import scan_sector as scanner
+import player_status as status
 import time
+import re
 # This module manages trade routes
 
 
@@ -94,6 +97,7 @@ def routeOptions(colonists = True, fighters = False, torpedoes = False, keepEner
     xEnergyKeepButton  = "html/body/form/table[2]/tbody/tr[2]/td[2]/input"
     xSaveButton        = "html/body/form/table[2]/tbody/tr[4]/td[2]/input"
     xWholePage         = "html/body"
+    xBanner            = "html/body/h1"
 
     # retrieve the current page
     currentPage = bnw.getPage()
@@ -411,6 +415,56 @@ def tradeRouteSearch(zeroPath, warpDB, maxTurns=100):
                     intWarps = [int(i) for i in warps]
                     warpDB[currentSector] = warps
                     continue
+
+# This function attempts to query the non-direct path distance to the start of a trade route
+def queryIndirectPath(port1, port2):
+    debug = False
+    xBanner = "html/body/h1"
+    xWholePage = "html/body"
+    if debug:
+        print("Querying indirect distance between ports {} and {}".format(port1, port2))
+    # retrieve the current page
+    currentPage = bnw.getPage()
+    baseURL = ('/').join(currentPage.split('/')[:-1])
+    rsPage = "{}/rsmove.php?engage=1&destination={}".format(baseURL, port1)
+    mainPage = "{}/main.php".format(baseURL)
+    bnw.loadPage(rsPage)
+    time.sleep(2)
+    bannerText = bnw.textFromElement(xBanner)
+    if bannerText == "DONTEXIST":
+        print("Unable to load real space move page")
+        exit(1)
+    elif not bannerText == "Realspace Move":
+        print("Unexpected banner text: {}, was looking for 'Realspace Move'".format(bannerText))
+        exit(1)
+    if debug:
+        print("Realspace Move page successfully loaded")
+
+    # due to non-formatting, we need to grab the entire page text
+    entirePage = bnw.textFromElement(xWholePage)
+    if entirePage == "DONTEXIST":
+        print("Unable to extract the text from the entire page")
+        exit(1)
+    distance = -1
+    energy = -1
+    for eachLine in entirePage.split('\n'):
+        if debug:
+            print('Examining line: {}'.format(eachLine))
+        m = re.search("take (\d+) turns.*gather (\d+) units", eachLine)
+        if m:
+            distance = m.group(1)
+            energy = m.group(2)
+            if debug:
+                print("Distance is {}, would gather {} energy".format(distance, energy))
+            break
+
+    if distance == -1:
+        print("regex didn't work - Blast!")
+        exit(1)
+
+    # return to the main page
+    bnw.loadPage(mainPage)
+    return [distance, energy]
 
 # For Edit Route
 #  /traderoute.php?command=edit&traderoute_id=XX

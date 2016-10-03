@@ -5,7 +5,6 @@ import email_poller as email
 import login_player as login
 import options as options
 import player_status as status
-import scan_sector as scanner
 import trade_route as trade
 import retrieve_settings as settings
 
@@ -233,10 +232,10 @@ currentSector = playerStatus['currentSector']
 print("Player is currently in sector {}".format(currentSector))
 
 tradeRoutes = trade.retrieveRoutes()
+print('Established trade routes: {}'.format(tradeRoutes))
 
 availableWarps = playerStatus['warps']
-# we just want ints - not strings
-intWarps = [int(i) for i in availableWarps]
+#intWarps = [int(i) for i in availableWarps]
 warpDB[currentSector] = availableWarps
 if currentSector != '0':
     shortestPath = find_shortest_path(warpDB, currentSector, '0')
@@ -270,6 +269,32 @@ goodsSector = -1
 portSector = {}
 distanceBeforeSearching = 10
 
+# Examine our established trade routes
+shortestRoute = 9999
+startRoute = 9999
+if len(tradeRoutes) > 0:
+    for currentRoute in tradeRoutes:
+        port1 = currentRoute[0]
+        port2 = currentRoute[2]
+        print("Examining Trade Route {} <=> {}".format(port1, port2))
+        shortestPath = find_shortest_path(warpDB, currentSector, port1)
+        if not shortestPath == None:
+            distance = len(shortestPath)
+            print("Trade Route via direct path is {} turns away".format(distance))
+            if distance < shortestRoute:
+                shortestRoute = distance
+                startRoute = port1
+        else:
+            print("Querying indirect path to trade route start")
+            indirectDistance = int(trade.queryIndirectPath(port1, port2)[0])
+            print("Trade Route via indirect path is {} turns away".format(indirectDistance))
+            if indirectDistance < shortestRoute:
+                shortestRoute = indirectDistance
+                startRoute = port1
+
+    print("The shortest route is to port {}, which is {} moves away".format(startRoute, shortestRoute))
+
+exit(1)
 
 print("#######\n##########\nAttempting to move {} sectors away from Zero before looking for a trade route".format(distanceBeforeSearching))
 while True:
