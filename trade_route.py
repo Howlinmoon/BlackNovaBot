@@ -417,17 +417,18 @@ def tradeRouteSearch(zeroPath, warpDB, maxTurns=100):
                     continue
 
 # This function attempts to query the non-direct path distance to the start of a trade route
-def queryIndirectPath(port1, port2):
+def queryIndirectPath(sector1, sector2, jump = False):
     debug = False
     xBanner = "html/body/h1"
     xWholePage = "html/body"
     if debug:
-        print("Querying indirect distance between ports {} and {}".format(port1, port2))
+        print("Querying indirect distance between current sector {} and sector {}".format(sector1, sector2))
     # retrieve the current page
     currentPage = bnw.getPage()
     baseURL = ('/').join(currentPage.split('/')[:-1])
-    rsPage = "{}/rsmove.php?engage=1&destination={}".format(baseURL, port1)
+    rsPage = "{}/rsmove.php?engage=1&destination={}".format(baseURL, sector2)
     mainPage = "{}/main.php".format(baseURL)
+    jumpPage = "{}/rsmove.php?engage=2&destination={}".format(baseURL, sector2)
     bnw.loadPage(rsPage)
     time.sleep(2)
     bannerText = bnw.textFromElement(xBanner)
@@ -462,9 +463,16 @@ def queryIndirectPath(port1, port2):
         print("regex didn't work - Blast!")
         exit(1)
 
-    # return to the main page
-    bnw.loadPage(mainPage)
-    return [distance, energy]
+    if not jump:
+        # return to the main page
+        bnw.loadPage(mainPage)
+        return [distance, energy]
+    else:
+        print("Performing Real Space Jump in 3, 2, 1")
+        bnw.loadPage(jumpPage)
+        time.sleep(2)
+        bnw.loadPage(mainPage)
+        return True
 
 # For Edit Route
 #  /traderoute.php?command=edit&traderoute_id=XX

@@ -85,3 +85,6 @@ Modified code for line 84:
 
 elseif (($destination < $sector_max && empty($engage)) || ($destination < $sector_max && $triptime > 0 && $engage == 1))
 ```
+
+2016/10/04 - Bot now will examine whether or not it has existing trade routes
+If it does, it determines which one is the closest - and then jumps to it.
