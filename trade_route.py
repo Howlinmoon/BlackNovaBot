@@ -474,6 +474,144 @@ def queryIndirectPath(sector1, sector2, jump = False):
         bnw.loadPage(mainPage)
         return True
 
+# Execute a trade route
+# /traderoute.php?engage=34
+# This function attempts to query the non-direct path distance to the start of a trade route
+def executeTrade(routeId, howManyTimes = 1, stopEarly = False):
+    debug = True
+    xBanner = "html/body/table/tbody/tr[1]/td/strong/font"
+    xTotalProfit = "html/body/center/font/strong/font[1]/strong"
+    xTurnsUsed = "html/body/center/font/strong/font[2]/strong/font"
+    xTurnsLeft = "html/body/center/font/strong/font[3]/strong/font"
+    xCredits   = "html/body/center/font/strong/font[4]/strong/font"
+    xRepeat    = "html/body/form/input[1]"
+    xSubmit    = "html/body/form/input[2]"
+    xWholePage = "html/body"
+    if debug:
+        print("Attempting to execute trade route Id: {}".format(routeId))
+    # retrieve the current page
+    currentPage = bnw.getPage()
+    baseURL = ('/').join(currentPage.split('/')[:-1])
+    executePage = "{}/traderoute.php?engage={}".format(baseURL, routeId)
+    mainPage = "{}/main.php".format(baseURL)
+    bnw.loadPage(executePage)
+    time.sleep(2)
+    bannerText = bnw.textFromElement(xBanner)
+    if bannerText == "DONTEXIST":
+        print("Unable to load trade route execute page")
+        exit(1)
+    if bannerText != "Trade Route Results":
+        print("Unexpected Banner Text: {}".format(bannerText))
+        exit(1)
+    # retrieve the stats from the sale
+    if debug:
+        print("Retrieving trade stats")
+
+    profit = bnw.textFromElement(xTotalProfit)
+    if profit == "DONTEXIST":
+        print("Unable to retrieve the profit")
+        exit(1)
+    profit = int(profit.replace(',', ''))
+
+    turnsUsed = bnw.textFromElement(xTurnsUsed)
+    if turnsUsed == "DONTEXIST":
+        print("Unable to retrieve the turns used")
+        exit(1)
+    turnsUsed = int(turnsUsed)
+
+    turnsLeft = bnw.textFromElement(xTurnsLeft)
+    if turnsLeft == "DONTEXIST":
+        print("Unable to retrieve the turns left")
+        exit(1)
+
+    currentCredits = bnw.textFromElement(xCredits)
+    if currentCredits == "DONTEXIST":
+        print("Unable to retrieve the current credits")
+        exit(1)
+    currentCredits = int(currentCredits.replace(',', ''))
+
+    print("After initial trade, the results were")
+    print("Profit: {}, Turns Left: {}".format(profit, turnsLeft))
+    profitEfficiency = profit / turnsUsed
+    print("Profit efficiency (profit / turns used): {}".format(profitEfficiency))
+
+    if howManyTimes > 1:
+        lastProfit = profit
+        totalProfits = lastProfit
+        totalTurnsUsed = turnsUsed
+        moreTimes = howManyTimes - 1
+        if debug:
+            print("Attempting to execute the trade {} more times".format(moreTimes))
+        if not bnw.fillTextBox(xRepeat, howManyTimes):
+            print("Unable to fill in the repeat quantity")
+            exit(1)
+        if debug:
+            print("Attempting to execute the multiple trades")
+        if not bnw.clickButton(xSubmit):
+            print("Unable to click the submit button")
+            exit(1)
+
+        if debug:
+            print("Attempting to extract the stats from the multiple trades")
+
+        for tradeNumber in range(moreTimes):
+            xTotalProfit = "html/body/center[{}]/font/strong/font[1]/strong".format(tradeNumber + 1)
+            xCredits     = "html/body/center[{}]/font/strong/font[4]/strong/font".format(tradeNumber + 1)
+            xTurnsLeft   = "html/body/center[{}]/font/strong/font[3]/strong/font".format(tradeNumber + 1)
+            xTurnsUsed   = "html/body/center[{}]/font/strong/font[2]/strong/font".format(tradeNumber + 1)
+            profit = bnw.textFromElement(xTotalProfit)
+            if profit == "DONTEXIST":
+                print("Unable to retrieve the profit")
+                exit(1)
+            profit = int(profit.replace(',',''))
+            totalProfits = totalProfits + profit
+
+            turnsUsed = bnw.textFromElement(xTurnsUsed)
+            if turnsUsed == "DONTEXIST":
+                print("Unable to retrieve the turns used")
+                exit(1)
+            turnsUsed = int(turnsUsed)
+            totalTurnsUsed = totalTurnsUsed + turnsUsed
+
+            turnsLeft = bnw.textFromElement(xTurnsLeft)
+            if turnsLeft == "DONTEXIST":
+                print("Unable to retrieve the turns left")
+                exit(1)
+
+            currentCredits = bnw.textFromElement(xCredits)
+            if currentCredits == "DONTEXIST":
+                print("Unable to retrieve the current credits")
+                exit(1)
+            currentCredits = int(currentCredits.replace(',',''))
+
+            print("After additional trade #{}, the results were".format(tradeNumber + 1))
+            print("Profit: {}, Turns Left: {}, Credits: {}".format(profit, turnsLeft, currentCredits))
+            profitEfficiency = totalProfits / turnsUsed
+            print("Profit efficiency (total profit / total turns used): {}".format(profitEfficiency))
+
+            profitDiff = profit - lastProfit
+            lastProfit = profit
+            if profitDiff < 0:
+                print("Profits are declining!")
+                if stopEarly:
+                    if debug:
+                        print("Stopping early to maintain efficiency!")
+                    break
+            elif profitDiff == 0:
+                print("Profits are stable")
+            else:
+                print("Profits are increasing!")
+
+
+    print("AAAND STOP!")
+    exit(1)
+
+    # multiple trades
+    # profit1 - html/body/center[1]/font/strong/font[1]/strong
+    # profit2 - html/body/center[2]/font/strong/font[1]/strong
+
+
+
 # For Edit Route
 #  /traderoute.php?command=edit&traderoute_id=XX
 

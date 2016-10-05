@@ -31,7 +31,7 @@ LOGGER.setLevel(logging.WARNING)
 # returns True if it succeeded, False otherwise
 # 2016/02/05 - Updated to convert dictionaries into strings, since "send_keys" can't handle dictionaries...
 def fillTextBox(xpath, text):
-    debug = False
+    debug = True
     if debug:
         print("fillTextBox sez text received: {} and its type: {}".format(text, type(text)))
     # massage our data into a simple string
@@ -69,10 +69,7 @@ def fillTextBox(xpath, text):
                     # need to erase the current contents of the input field
                     print("oldContents:  {}, text: {}".format(oldContents, text))
                     print("Erasing the current contents of the input field")
-                element.send_keys(Keys.CONTROL + "a");
-                time.sleep(1)
-                element.send_keys(Keys.DELETE);
-                time.sleep(1)
+                element.clear()
                 if debug:
                     print("Typing into text field: {}".format(text))
                 # try typing something in it

@@ -88,3 +88,8 @@ elseif (($destination < $sector_max && empty($engage)) || ($destination < $secto
 
 2016/10/04 - Bot now will examine whether or not it has existing trade routes
 If it does, it determines which one is the closest - and then jumps to it.
+
+2016/10/05 - Fixed a bug in the text input routine where it was not properly clearing already filled in text
+Implemented executing a trade route the initial time, and optionally multiple times
+
+Now need to investigate the skill level price thresholds.
