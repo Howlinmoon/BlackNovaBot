@@ -147,5 +147,56 @@ def getStatus():
 
     return playerStatus
 
+# Display and parse the ship status page
+def getShipStatus():
+    # /report.php
+    debug = True
+    xBanner = "html/body/h1"
+    xCredits = "html/body/div[1]/table[1]/tbody/tr/td[3]/strong"
+    xHolds = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[1]/td[2]/strong"
+    xEnergy = "html/body/div[1]/table[2]/tbody/tr/td[3]/table/tbody/tr[1]/td[2]/strong"
+
+    xHullLevelName    = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[2]/td[1]"
+    xHullLevelValue   = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[2]/td[2]"
+    xEngineLevelName  = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[3]/td[1]"
+    xEngineLevelValue = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[3]/td[2]"
+    #...
+    xAverageTechName  = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[12]/td[1]/i"
+    xAverageTechLevel = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[12]/td[2]"
+    #...
+    xOreName       = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[2]/td[1]"
+    xOreValue      = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[2]/td[2]"
+    #...
+    xColonistsName = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[5]/td[1]"
+    xColonistsQty  = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[5]/td[2]"
+    # armor and weapons
+    xArmorName     = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[8]/td[1]"
+    xArmorAmount   = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[8]/td[2]"
+    xFightersName  = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[9]/td[1]"
+    xFightersQty   = ""
+
+
+    xWholePage = "html/body"
+    if debug:
+        print("Attempting to execute trade route Id: {}".format(routeId))
+    # retrieve the current page
+    currentPage = bnw.getPage()
+    baseURL = ('/').join(currentPage.split('/')[:-1])
+    executePage = "{}/traderoute.php?engage={}".format(baseURL, routeId)
+    mainPage = "{}/main.php".format(baseURL)
+    bnw.loadPage(executePage)
+    time.sleep(2)
+    bannerText = bnw.textFromElement(xBanner)
+    if bannerText == "DONTEXIST":
+        print("Unable to load trade route execute page")
+        exit(1)
+    if bannerText != "Trade Route Results":
+        print("Unexpected Banner Text: {}".format(bannerText))
+        exit(1)
+    # retrieve the stats from the sale
+    if debug:
+        print("Retrieving trade stats")
+
+    profit = bnw.textFromElement(xTotalProfit)
 
 

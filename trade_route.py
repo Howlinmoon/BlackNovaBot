@@ -602,9 +602,8 @@ def executeTrade(routeId, howManyTimes = 1, stopEarly = False):
             else:
                 print("Profits are increasing!")
 
-
-    print("AAAND STOP!")
-    exit(1)
+    bnw.loadPage(mainPage)
+    return
 
     # multiple trades
     # profit1 - html/body/center[1]/font/strong/font[1]/strong
