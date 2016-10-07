@@ -1,5 +1,5 @@
 import support_lib as bnw
-
+import time
 # This module retrieves the players current status
 
 
@@ -149,54 +149,94 @@ def getStatus():
 
 # Display and parse the ship status page
 def getShipStatus():
-    # /report.php
     debug = True
-    xBanner = "html/body/h1"
+    xBanner  = "html/body/h1"
     xCredits = "html/body/div[1]/table[1]/tbody/tr/td[3]/strong"
-    xHolds = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[1]/td[2]/strong"
-    xEnergy = "html/body/div[1]/table[2]/tbody/tr/td[3]/table/tbody/tr[1]/td[2]/strong"
+    xHolds   = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[1]/td[2]/strong"
+    xEnergy  = "html/body/div[1]/table[2]/tbody/tr/td[3]/table/tbody/tr[1]/td[2]/strong"
 
-    xHullLevelName    = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[2]/td[1]"
-    xHullLevelValue   = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[2]/td[2]"
-    xEngineLevelName  = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[3]/td[1]"
-    xEngineLevelValue = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[3]/td[2]"
-    #...
-    xAverageTechName  = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[12]/td[1]/i"
     xAverageTechLevel = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[12]/td[2]"
-    #...
-    xOreName       = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[2]/td[1]"
-    xOreValue      = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[2]/td[2]"
-    #...
-    xColonistsName = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[5]/td[1]"
-    xColonistsQty  = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[5]/td[2]"
-    # armor and weapons
-    xArmorName     = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[8]/td[1]"
-    xArmorAmount   = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[8]/td[2]"
-    xFightersName  = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[9]/td[1]"
-    xFightersQty   = ""
-
-
-    xWholePage = "html/body"
+    shipStatus = {}
     if debug:
-        print("Attempting to execute trade route Id: {}".format(routeId))
+        print("Attempting to extract the ship tech levels and other status")
     # retrieve the current page
     currentPage = bnw.getPage()
     baseURL = ('/').join(currentPage.split('/')[:-1])
-    executePage = "{}/traderoute.php?engage={}".format(baseURL, routeId)
+    shipStatusPage = "{}/report.php".format(baseURL)
     mainPage = "{}/main.php".format(baseURL)
-    bnw.loadPage(executePage)
+    bnw.loadPage(shipStatusPage)
     time.sleep(2)
     bannerText = bnw.textFromElement(xBanner)
     if bannerText == "DONTEXIST":
-        print("Unable to load trade route execute page")
+        print("Unable to load player ship status page")
         exit(1)
-    if bannerText != "Trade Route Results":
+    if bannerText != "Ship Report":
         print("Unexpected Banner Text: {}".format(bannerText))
         exit(1)
-    # retrieve the stats from the sale
+    # retrieve the ship stats
     if debug:
-        print("Retrieving trade stats")
+        print("Retrieving ship stats")
 
-    profit = bnw.textFromElement(xTotalProfit)
+    itemList = []
+    for tr in range(2, 12):
+        xItem = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[{}]".format(tr)
+        itemList.append(xItem)
 
+    for tr in range(2, 6):
+        xItem = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[{}]".format(tr)
+        itemList.append(xItem)
 
+    for tr in range(8, 11):
+        xItem = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[{}]".format(tr)
+        itemList.append(xItem)
+
+    for tr in range(4, 12):
+        xItem = "html/body/div[1]/table[2]/tbody/tr/td[3]/table/tbody/tr[{}]".format(tr)
+        itemList.append(xItem)
+
+    for currentItem in itemList:
+        xItemName = currentItem + "/td[1]"
+        xItemValue = currentItem + "/td[2]"
+        itemName = bnw.textFromElement(xItemName)
+        itemValue = bnw.textFromElement(xItemValue)
+        if itemName == "DONTEXIST" or itemValue == "DONTEXIST":
+            print("ERROR extracting currentItem: {}".format(currentItem))
+            print("itemName: {}, itemValue: {}".format(itemName, itemValue))
+            exit(1)
+        if debug:
+            print("itemName: {}, itemValue: {}".format(itemName, itemValue))
+        shipStatus[itemName] = itemValue
+
+    # grab non-conformance stats
+    averageTechLevel = bnw.textFromElement(xAverageTechLevel)
+    if averageTechLevel == "DONTEXIST":
+        print("Unable to extract average tech level")
+        exit(1)
+    shipStatus["Average tech level"] = averageTechLevel
+
+    xCredits = "html/body/div[1]/table[1]/tbody/tr/td[3]/strong"
+    xHolds   = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[1]/td[2]/strong"
+    xEnergy  = "html/body/div[1]/table[2]/tbody/tr/td[3]/table/tbody/tr[1]/td[2]/strong"
+
+    shipCredits = bnw.textFromElement(xCredits)
+    if shipCredits == "DONTEXIST":
+        print("Unable to extract credits")
+        exit(1)
+    shipStatus["Credits"] = shipCredits
+
+    shipHolds = bnw.textFromElement(xHolds)
+    if shipHolds == "DONTEXIST":
+        print("Unable to extract holds")
+        exit(1)
+    shipStatus["Holds"] = shipHolds
+
+    shipEnergy = bnw.textFromElement(xEnergy)
+    if shipEnergy == "DONTEXIST":
+        print("Unable to extract energy")
+        exit(1)
+    shipStatus["Energy"] = shipEnergy
+
+    # return to the main page
+    bnw.loadPage(mainPage)
+
+    return shipStatus

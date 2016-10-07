@@ -459,4 +459,7 @@ warpsTable.insert(warpDB)
 
 print("Need to start executing trade route Id: {}".format(routeId))
 trade.executeTrade(routeId, 25, True)
+shipStatus = status.getShipStatus()
+print("ship status")
+print(shipStatus)
 exit(1)
