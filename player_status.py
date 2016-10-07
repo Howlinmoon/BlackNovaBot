@@ -205,6 +205,8 @@ def getShipStatus():
             exit(1)
         if debug:
             print("itemName: {}, itemValue: {}".format(itemName, itemValue))
+        if "Level " in itemValue:
+            itemValue = itemValue.replace('Level ','')
         shipStatus[itemName] = itemValue
 
     # grab non-conformance stats

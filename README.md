@@ -89,7 +89,7 @@ elseif (($destination < $sector_max && empty($engage)) || ($destination < $secto
 2016/10/04 - Bot now will examine whether or not it has existing trade routes
 If it does, it determines which one is the closest - and then jumps to it.
 
-2016/10/05 - Fixed a bug in the text input routine where it was not properly clearing already filled in text
+2016/10/05 - Fixed a bug in the text input routine where it was not properly clearing already filled in text<br>
 Implemented executing a trade route the initial time, and optionally multiple times
 
 Now need to investigate the skill level price thresholds.
@@ -112,3 +112,7 @@ Tech Upgrades
 1 -> 3 = 6000
 
 ```
+
+2016/10/07 - Bot is now able to return to sector 0, and purchase a limited set of tech upgrades:<br>
+Hull, Computer and Engines<br>
+

@@ -533,7 +533,7 @@ def executeTrade(routeId, howManyTimes = 1, stopEarly = False):
     print("After initial trade, the results were")
     print("Profit: {}, Turns Left: {}".format(profit, turnsLeft))
     profitEfficiency = profit / turnsUsed
-    print("Profit efficiency (profit / turns used): {}".format(profitEfficiency))
+    print("Profit efficiency (profit {} / turns used {}): {}".format(profit, turnsUsed, profitEfficiency))
 
     if howManyTimes > 1:
         lastProfit = profit

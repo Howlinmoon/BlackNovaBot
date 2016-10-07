@@ -7,6 +7,7 @@ import options as options
 import player_status as status
 import trade_route as trade
 import retrieve_settings as settings
+import port_handler as port
 
 import time
 import random
@@ -462,4 +463,50 @@ trade.executeTrade(routeId, 25, True)
 shipStatus = status.getShipStatus()
 print("ship status")
 print(shipStatus)
+
+print("Returning to Sector Zero to make some purchases")
+shortestPath = find_shortest_path(warpDB, currentSector, '0')
+if shortestPath != None:
+    print("Best Path to sector 0")
+    print(shortestPath)
+    print('Using the new "moveVia" function')
+    # remove the first sector, which is where we are currently
+    if moveVia(shortestPath):
+        print('Successfully moved to sector 0!')
+    else:
+        print('Something happened attempting to move to sector 0')
+        exit(1)
+
+else:
+    print('There is no known path from {} to sector 0'.format(currentSector))
+    print('Attempting to move player to sector 0 starting position')
+    returnStatus = gotoSectorZero(100, warpDB)
+    passOrFail = returnStatus[0]
+    warpDB = returnStatus[1]
+    print("Found Sector Zero: {}".format(passOrFail))
+    if not passOrFail:
+        print('Was unable to find sector zero - aborting')
+        exit(1)
+
+print("Now in sector Zero - attempting to make a purchase")
+shoppingList = {}
+
+currentEngines = int(shipStatus["Engines"])
+currentHull = int(shipStatus["Hull"])
+currentComputer = int(shipStatus["Computer"])
+
+print("Current Engine tech: {}".format(currentEngines))
+print("Current Hull tech: {}".format(currentHull))
+print("Current Computer tech: {}".format(currentComputer))
+
+
+shoppingList["engineTech"] = str(currentEngines + 1)
+shoppingList["hullTech"] = str(currentHull + 1)
+shoppingList["computerTech"] = str(currentComputer + 1)
+
+print("shopping list: {}".format(shoppingList))
+
+purchaseResults = port.specialPort(shoppingList)
+print("Purchase results: {}".format(purchaseResults))
+
 exit(1)
