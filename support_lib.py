@@ -296,6 +296,10 @@ def selectedValue(xpath):
         selected_option = select.first_selected_option
         return selected_option.text
 
+# try to fool any onblurs
+def onBlurFix():
+    driver.execute_script("window.onblur = function() { window.onfocus() }")
+
 # bog standard selector
 # http://stackoverflow.com/questions/7867537/selenium-python-drop-down-menu-option-value
 def selectDropDownNew(labelXPath, selection):

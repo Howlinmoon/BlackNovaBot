@@ -116,3 +116,6 @@ Tech Upgrades
 2016/10/07 - Bot is now able to return to sector 0, and purchase a limited set of tech upgrades:<br>
 Hull, Computer and Engines<br>
 
+2016/10/13 - Issue with reading the upgrade costs when selecting a tech level.
+The values are rendered via JS and appear as nulls when scanned.  Either going to calculate
+the cost ourself, or implement a scripting work-around...

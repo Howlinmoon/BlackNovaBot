@@ -9,10 +9,15 @@ def specialPort(purchaseDict):
     xBanner         = "html/body/h1"
     xWholePage      = "html/body"
     xHullSelect     = "html/body/form/table[1]/tbody/tr[2]/td[9]/select"
+    xHullCost       = "html/body/form/table[1]/tbody/tr[2]/td[7]/input"
     xEnginesSelect  = "html/body/form/table[1]/tbody/tr[3]/td[9]/select"
+    xEnginesCost    = "html/body/form/table[1]/tbody/tr[3]/td[7]/input"
     xComputerSelect = "html/body/form/table[1]/tbody/tr[5]/td[9]/select"
+    xComputerCost   = "html/body/form/table[1]/tbody/tr[5]/td[7]/input"
     xBuyButton      = "html/body/form/table[3]/tbody/tr/td[1]/input"
-    xTotalCost      = "html/body/form/table[3]/tbody/tr/td[2]/input"
+    xCredits        = "html/body/p[1]"
+    xResultsBanner  = "html/body/table/tbody/tr[1]/td/font/strong"
+    xTotalCost      = "html/body/table/tbody/tr[2]/td/strong/font"
 
     currentPage = bnw.getPage()
     baseURL = ('/').join(currentPage.split('/')[:-1])
@@ -42,6 +47,19 @@ def specialPort(purchaseDict):
         print("Unhandled Error #2 in specialPort")
         exit(1)
 
+    # hack
+    bnw.onBlurFix()
+
+    # determine how many credits are available for spending
+    textBlob = bnw.textFromElement(xCredits)
+    # regex out the cost
+    # You have 206,527,757 credits to spend.
+    m = re.search("have\s+(.*)\s+credits", textBlob)
+    if not m:
+        print("Unable to regex the available credits!")
+        exit(1)
+    creditAvailable = int(m.group(1).replace(",",""))
+
     requestedEngineTech = purchaseDict["engineTech"]
     requestedComputerTech = purchaseDict["computerTech"]
     requestedHullTech = purchaseDict["hullTech"]
@@ -51,6 +69,7 @@ def specialPort(purchaseDict):
     currentComputerTech = bnw.selectedValue(xComputerSelect)
     currentHullTech = bnw.selectedValue(xHullSelect)
 
+    print("Credits available: {}".format(creditAvailable))
     print("Current Engine Tech: {}, Req Engine Tech: {}".format(currentEngineTech, requestedEngineTech, ))
     print("Current Computer Tech: {}, Req Computer Tech: {}".format(currentComputerTech, requestedComputerTech))
     print("Current Hull Tech: {}, Req Hull Tech: {}".format(currentHullTech, requestedHullTech))
@@ -67,22 +86,45 @@ def specialPort(purchaseDict):
         if not bnw.selectDropDownNew(xHullSelect, requestedHullTech):
             print("Unable to select the requested hull tech value")
 
-    # read how much it is going to cost
-    howMuch = bnw.textFromElement(xTotalCost)
-    if howMuch == "DONTEXIST":
-        print("Unable to find the total cost display")
-        exit(1)
+    # calculate the costs ourself
+    hullCostString = bnw.textFromElement(xHullCost)
+    enginesCostString = bnw.textFromElement(xEnginesCost)
+    computerCostString = bnw.textFromElement(xComputerCost)
+
+
+    print("hullCostString: {}".format(hullCostString))
+    print("enginesCostString: {}".format(enginesCostString))
+    print("computerCostString: {}".format(computerCostString))
+    exit(1)
+    howMuch = int(hullCostString) + int(enginesCostString) + int(computerCostString)
+
     print("Cost is: {}".format(howMuch))
 
-    if howMuch == "Not enough credits":
+    if howMuch > creditAvailable:
         print("Unable to afford this purchase")
         bnw.loadPage(mainPage)
-        return ["ERROR", "TOO EXPENSIVE"]
+        return ["TOO EXPENSIVE", howMuch, creditAvailable]
 
     print("Attempting to execute the purchase")
     if not bnw.clickButton(xBuyButton):
         print("Was unable to click the 'Buy' button")
         exit(1)
 
+    time.sleep(2)
+    resultBanner = bnw.textFromElement(xResultsBanner)
+    if not resultBanner == "Results for this trade":
+        print("Results banner not found")
+        exit(1)
+
+    # Cost : 2,500 Credits
+    finalBlob = bnw.textFromElement(xTotalCost)
+    if finalBlob == "DONTEXIST":
+        print("Total cost not found")
+        exit(1)
+    m = re.search("Cost\s\:\s(.*)\sCredits")
+    if not m:
+        print("Unable to regex the final cost")
+        exit(1)
+    finalCost = int(m.group(1).replace(",",""))
     bnw.loadPage(mainPage)
-    return ["SUCCESS", ""]
+    return ["SUCCESS", finalCost]

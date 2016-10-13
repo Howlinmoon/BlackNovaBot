@@ -238,17 +238,31 @@ def retrieveRoutes():
             bnw.loadPage(mainPage)
             return routeList
 
-        sourceType = bnw.textFromElement(xSourceType)
+        sourceType = bnw.textFromElement(xSourceType).strip()
         destPort = bnw.textFromElement(xDestination)
-        destType = bnw.textFromElement(xDestType)
+        destType = bnw.textFromElement(xDestType).strip()
+
         distance = bnw.textFromElement(xDistance)
-        circuit  = bnw.textFromElement(xCircuit)
+        if "Warp" in distance:
+            movementType = "Warp"
+        else:
+            movementType = "RS"
+        m = re.search("(\d+) turn", distance)
+        if not m:
+            print("Unable to regex the distance in turns when parsing trade route distance: {}".format(distance))
+            exit(1)
+        distance = int(m.group(1))
+        circuit  = bnw.textFromElement(xCircuit).strip()
+        if "2 ways" in circuit:
+            circuitType = "BiDirectional"
+        else:
+            circuitType = "UniDirectional"
         editLink = bnw.linkFromElement(xEdit)
         routeId = editLink.split('=')[-1]
 
         print('Route #{} From: {} (type: {}) To: {} (type: {})'.format(routeNumber, sourcePort, sourceType, destPort, destType))
-        print("Distance: {}, Circuit Type: {}, Route Id: {}".format(distance, circuit, routeId))
-        newRoute = [sourcePort, sourceType, destPort, destType, distance, circuit, routeId]
+        print("Distance: {}, Circuit Type: {}, Movement Type: {}, Route Id: {}".format(distance, circuitType, movementType, routeId))
+        newRoute = [sourcePort, sourceType, destPort, destType, distance, movementType, circuitType, routeId]
         routeList.append(newRoute)
 
 # This routine starts searching for an optimal trade route from the
