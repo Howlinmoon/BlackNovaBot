@@ -14,6 +14,16 @@ import random
 from tinydb import TinyDB, Query
 # a rudimentary testing framework for bot creation
 
+# Compute the cost of an upgrade
+def upgradeCost(desiredvalue,currentvalue):
+    DeltaCost = 0
+    Delta = desiredvalue - currentvalue
+    while Delta > 0:
+        DeltaCost = DeltaCost + (2 **  (desiredvalue - Delta))
+        Delta = Delta - 1
+
+    DeltaCost = DeltaCost * 1000
+    return DeltaCost
 
 
 # This routine attempts to move the player to Zero within the allotted move limit
@@ -481,57 +491,70 @@ while True:
     playerStatus = status.getStatus()
     turnsLeft = playerStatus["turnsLeft"]
 
-    print("Returning to Sector Zero to make some purchases")
-    shortestPath = find_shortest_path(warpDB, currentSector, '0')
-    if shortestPath != None:
-        print("Best Path to sector 0")
-        print(shortestPath)
-        print('Using the new "moveVia" function')
-        # remove the first sector, which is where we are currently
-        if moveVia(shortestPath):
-            print('Successfully moved to sector 0!')
-        else:
-            print('Something happened attempting to move to sector 0')
-            exit(1)
-
-    else:
-        print('There is no known path from {} to sector 0'.format(currentSector))
-        print('Attempting to move player to sector 0 starting position')
-        returnStatus = gotoSectorZero(100, warpDB)
-        passOrFail = returnStatus[0]
-        warpDB = returnStatus[1]
-        print("Found Sector Zero: {}".format(passOrFail))
-        if not passOrFail:
-            print('Was unable to find sector zero - aborting')
-            exit(1)
-
-    print("Now in sector Zero - attempting to make a purchase")
-    shoppingList = {}
-
+    # Calculate the upgrade cost prior to attempting to buy them
     currentEngines = int(shipStatus["Engines"])
     currentHull = int(shipStatus["Hull"])
     currentComputer = int(shipStatus["Computer"])
 
-    print("Current Engine tech: {}".format(currentEngines))
-    print("Current Hull tech: {}".format(currentHull))
-    print("Current Computer tech: {}".format(currentComputer))
 
+    engineCost = upgradeCost(currentEngines + 1, currentEngines)
+    hullCost = upgradeCost(currentHull + 1, currentHull)
+    computerCost = upgradeCost(currentComputer + 1, currentComputer)
 
-    shoppingList["engineTech"] = str(currentEngines + 1)
-    shoppingList["hullTech"] = str(currentHull + 1)
-    shoppingList["computerTech"] = str(currentComputer + 1)
+    print("Current Engine tech: {}, cost to upgrade: {}".format(currentEngines, engineCost))
+    print("Current Hull tech: {}, cost to upgrade: {}".format(currentHull, hullCost))
+    print("Current Computer tech: {}, cost to upgrade: {}".format(currentComputer, computerCost))
 
-    print("shopping list: {}".format(shoppingList))
+    totalCost = engineCost + hullCost + computerCost
+    if totalCost > playerStatus['money']:
+        print("Not enough credits for the upgrades")
+        continue
 
-    purchaseResults = port.specialPort(shoppingList)
-    howMuch = purchaseResults[1]
-    if purchaseResults[0] == "SUCCESS":
-        print("Purchase was successful, cost was: {}".format(howMuch))
     else:
-        print("Could not afford the purchase")
-        creditsAvailable = purchaseResults[2]
-        print("Purchase cost: {}, Credits available: {}, Difference: {}".format(howMuch, creditsAvailable, howMuch - creditsAvailable))
-        exit(1)
+        print("Returning to Sector Zero to make some purchases")
+        shortestPath = find_shortest_path(warpDB, currentSector, '0')
+        if shortestPath != None:
+            print("Best Path to sector 0")
+            print(shortestPath)
+            print('Using the new "moveVia" function')
+            # remove the first sector, which is where we are currently
+            if moveVia(shortestPath):
+                print('Successfully moved to sector 0!')
+            else:
+                print('Something happened attempting to move to sector 0')
+                exit(1)
+
+        else:
+            print('There is no known path from {} to sector 0'.format(currentSector))
+            print('Attempting to move player to sector 0 starting position')
+            returnStatus = gotoSectorZero(100, warpDB)
+            passOrFail = returnStatus[0]
+            warpDB = returnStatus[1]
+            print("Found Sector Zero: {}".format(passOrFail))
+            if not passOrFail:
+                print('Was unable to find sector zero - aborting')
+                exit(1)
+
+        print("Now in sector Zero - attempting to make a purchase")
+        shoppingList = {}
+
+
+
+        shoppingList["engineTech"] = str(currentEngines + 1)
+        shoppingList["hullTech"] = str(currentHull + 1)
+        shoppingList["computerTech"] = str(currentComputer + 1)
+
+        print("shopping list: {}".format(shoppingList))
+
+        purchaseResults = port.specialPort(shoppingList)
+        howMuch = purchaseResults[1]
+        if purchaseResults[0] == "SUCCESS":
+            print("Purchase was successful, cost was: {}".format(howMuch))
+        else:
+            print("Could not afford the purchase")
+            creditsAvailable = purchaseResults[2]
+            print("Purchase cost: {}, Credits available: {}, Difference: {}".format(howMuch, creditsAvailable, howMuch - creditsAvailable))
+            exit(1)
 exit(1)
 
 # Need to evaluate turns remaining prior to attempting jumps

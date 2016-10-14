@@ -298,7 +298,8 @@ def selectedValue(xpath):
 
 # try to fool any onblurs
 def onBlurFix():
-    driver.execute_script("window.onblur = function() { window.onfocus() }")
+    driver.execute_script("countTotal()")
+    #driver.execute_script("window.onblur = function() { window.onfocus() }")
 
 # bog standard selector
 # http://stackoverflow.com/questions/7867537/selenium-python-drop-down-menu-option-value

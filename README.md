@@ -96,26 +96,12 @@ Now need to investigate the skill level price thresholds.
 
 2016/10/06 - In the process of creating a Ship Status extractor
 
-```
-Tech Upgrades
-
-
-0 -> 1 = 1000
-0 -> 2 = 3000
-0 -> 3 = 7000
-0 -> 4 = 15000
-0 -> 5 = 31000
-0 -> 6 = 63000
-0 -> 7 = 127000
-
-1 -> 2 = 2000
-1 -> 3 = 6000
-
-```
-
 2016/10/07 - Bot is now able to return to sector 0, and purchase a limited set of tech upgrades:<br>
 Hull, Computer and Engines<br>
 
 2016/10/13 - Issue with reading the upgrade costs when selecting a tech level.
 The values are rendered via JS and appear as nulls when scanned.  Either going to calculate
 the cost ourself, or implement a scripting work-around...
+
+2016/10/14 - Unable to address the JS rendered cost, so implemented our own cost check prior to
+attempting the purchase.

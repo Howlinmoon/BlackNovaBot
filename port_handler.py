@@ -9,11 +9,8 @@ def specialPort(purchaseDict):
     xBanner         = "html/body/h1"
     xWholePage      = "html/body"
     xHullSelect     = "html/body/form/table[1]/tbody/tr[2]/td[9]/select"
-    xHullCost       = "html/body/form/table[1]/tbody/tr[2]/td[7]/input"
     xEnginesSelect  = "html/body/form/table[1]/tbody/tr[3]/td[9]/select"
-    xEnginesCost    = "html/body/form/table[1]/tbody/tr[3]/td[7]/input"
     xComputerSelect = "html/body/form/table[1]/tbody/tr[5]/td[9]/select"
-    xComputerCost   = "html/body/form/table[1]/tbody/tr[5]/td[7]/input"
     xBuyButton      = "html/body/form/table[3]/tbody/tr/td[1]/input"
     xCredits        = "html/body/p[1]"
     xResultsBanner  = "html/body/table/tbody/tr[1]/td/font/strong"
@@ -86,31 +83,24 @@ def specialPort(purchaseDict):
         if not bnw.selectDropDownNew(xHullSelect, requestedHullTech):
             print("Unable to select the requested hull tech value")
 
-    # calculate the costs ourself
-    hullCostString = bnw.textFromElement(xHullCost)
-    enginesCostString = bnw.textFromElement(xEnginesCost)
-    computerCostString = bnw.textFromElement(xComputerCost)
-
-
-    print("hullCostString: {}".format(hullCostString))
-    print("enginesCostString: {}".format(enginesCostString))
-    print("computerCostString: {}".format(computerCostString))
-    exit(1)
-    howMuch = int(hullCostString) + int(enginesCostString) + int(computerCostString)
-
-    print("Cost is: {}".format(howMuch))
-
-    if howMuch > creditAvailable:
-        print("Unable to afford this purchase")
-        bnw.loadPage(mainPage)
-        return ["TOO EXPENSIVE", howMuch, creditAvailable]
-
     print("Attempting to execute the purchase")
     if not bnw.clickButton(xBuyButton):
         print("Was unable to click the 'Buy' button")
         exit(1)
 
     time.sleep(2)
+    if not bnw.elementExists(xResultsBanner):
+        allText = bnw.textFromElement(xWholePage)
+        m = re.search("total cost is\s+(.*)\s+credits and you only have\s+(.*)\s+credits.", allText)
+        if not m:
+            print("Not a successful trade, and unable to determine why")
+            exit(1)
+        theCost = int(m.group(1).replace(",",""))
+        theCredits = int(m.group(2).replace(",",""))
+        notEnough = theCost - theCredits
+        print("Short {} credits".format(notEnough))
+        return["ERROR", "TOO EXPENSIVE"]
+
     resultBanner = bnw.textFromElement(xResultsBanner)
     if not resultBanner == "Results for this trade":
         print("Results banner not found")
