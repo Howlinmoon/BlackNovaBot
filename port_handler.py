@@ -111,7 +111,7 @@ def specialPort(purchaseDict):
     if finalBlob == "DONTEXIST":
         print("Total cost not found")
         exit(1)
-    m = re.search("Cost\s\:\s(.*)\sCredits")
+    m = re.search("Cost\s\:\s(.*)\sCredits", finalBlob)
     if not m:
         print("Unable to regex the final cost")
         exit(1)
