@@ -1,0 +1,93 @@
+function MakeMax(name, val) { 
+    if (document.forms[0].elements[name].value != val) { 
+        if (val != 0) { 
+            document.forms[0].elements[name].value = val;
+        } 
+    } 
+} 
+
+function changeDelta(desiredvalue,currentvalue) { 
+    Delta=0;
+    DeltaCost=0; 
+    Delta = desiredvalue - currentvalue; 
+    while (Delta>0) { 
+        DeltaCost=DeltaCost + Math.pow(2,desiredvalue-Delta); 
+        Delta=Delta-1; 
+    } 
+    DeltaCost=DeltaCost * 1000 
+    return DeltaCost; 
+} 
+
+function countTotal() { 
+    // Here we cycle through all form values (other than buy, or full), and regexp out all non-numerics. (1,000 = 1000) 
+    // Then, if its become a null value (type in just a, it would be a blank value. blank is bad.) we set it to zero. 
+    var form = document.forms[0]; 
+    var i = form.elements.length; 
+    while (i > 0) { 
+        if ((form.elements[i-1].value != 'Buy') && (form.elements[i-1].value != 'Full')) { 
+            var tmpval = form.elements[i-1].value.replace(/\D+/g, ""); 
+            if (tmpval != form.elements[i-1].value) { 
+                form.elements[i-1].value = form.elements[i-1].value.replace(/\D+/g, "");
+            } 
+        } 
+
+        if (form.elements[i-1].value == '') { 
+            form.elements[i-1].value ='0'; 
+        } 
+
+        i--; 
+    } 
+    // Here we set all 'Max' items to 0 if they are over max - player amt. 
+    if ((10 < form.dev_genesis_number.value) && (form.dev_genesis_number.value != 'Full')) {
+        form.dev_genesis_number.value=0 
+    } 
+
+    if ((10 < form.dev_beacon_number.value) && (form.dev_beacon_number.value != 'Full')) {
+        form.dev_beacon_number.value=0 
+    } 
+
+    if ((10 < form.dev_emerwarp_number.value) && (form.dev_emerwarp_number.value != 'Full')) {
+        form.dev_emerwarp_number.value=0 
+    } 
+
+    if ((10 < form.dev_warpedit_number.value) && (form.dev_warpedit_number.value != 'Full')) { 
+        form.dev_warpedit_number.value=0 
+    } 
+
+    if ((98516 < form.fighter_number.value) && (form.fighter_number.value != 'Full')) { 
+        form.fighter_number.value=0 
+    } 
+
+    if ((0 < form.torpedo_number.value) && (form.torpedo_number.value != 'Full')) { 
+        form.torpedo_number.value=0 
+    } 
+
+    if ((90 < form.armor_number.value) && (form.armor_number.value != 'Full')) { 
+        form.armor_number.value=0 
+    } 
+
+    if ((0 < form.colonist_number.value) && (form.colonist_number.value != 'Full' )) { 
+        form.colonist_number.value=0 
+    } 
+
+    // Done with the bounds checking 
+    // Pluses must be first, or if empty will produce a javascript error 
+
+    form.total_cost.value = 0 + form.dev_genesis_number.value * 1000000 + form.dev_beacon_number.value * 100 + form.dev_emerwarp_number.value * 1000000 + form.dev_warpedit_number.value * 100000 + form.elements['dev_minedeflector_number'].value * 10 + (form.escapepod_purchase.checked ? 100000 : 0) + (form.fuelscoop_purchase.checked ? 100000 : 0) + (form.lssd_purchase.checked ? 10000000 : 0) + changeDelta(form.hull_upgrade.value,17) + changeDelta(form.engine_upgrade.value,17) + changeDelta(form.power_upgrade.value,0) + changeDelta(form.computer_upgrade.value,17) + changeDelta(form.sensors_upgrade.value,0) + changeDelta(form.beams_upgrade.value,0) + changeDelta(form.armor_upgrade.value,0) + changeDelta(form.cloak_upgrade.value,0) + changeDelta(form.torp_launchers_upgrade.value,0) + changeDelta(form.shields_upgrade.value,0) + form.fighter_number.value * 50 + form.armor_number.value * 5 ; 
+
+    if (form.total_cost.value > 327088083) { 
+        form.total_cost.value = 'Not enough credits'; 
+    } 
+
+    form.total_cost.length = form.total_cost.value.length; 
+    form.engine_costper.value=changeDelta(form.engine_upgrade.value,17); 
+    form.power_costper.value=changeDelta(form.power_upgrade.value,0); 
+    form.computer_costper.value=changeDelta(form.computer_upgrade.value,17); 
+    form.sensors_costper.value=changeDelta(form.sensors_upgrade.value,0); 
+    form.beams_costper.value=changeDelta(form.beams_upgrade.value,0); 
+    form.armor_costper.value=changeDelta(form.armor_upgrade.value,0); 
+    form.cloak_costper.value=changeDelta(form.cloak_upgrade.value,0); 
+    form.torp_launchers_costper.value=changeDelta(form.torp_launchers_upgrade.value,0); 
+    form.hull_costper.value=changeDelta(form.hull_upgrade.value,17); 
+    form.shields_costper.value=changeDelta(form.shields_upgrade.value,0); 
+}
