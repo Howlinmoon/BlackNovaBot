@@ -8,9 +8,14 @@ def specialPort(purchaseDict):
     genericText = "Trading Commodities"
     xBanner         = "html/body/h1"
     xWholePage      = "html/body"
-    xHullSelect     = "html/body/form/table[1]/tbody/tr[2]/td[9]/select"
-    xEnginesSelect  = "html/body/form/table[1]/tbody/tr[3]/td[9]/select"
-    xComputerSelect = "html/body/form/table[1]/tbody/tr[5]/td[9]/select"
+
+    compList = ["Hull", "Engines", "Power", "Computer", "Sensors", "Beam Weapons",
+                     "Armor", "Cloak", "Torpedo launchers", "Shields"]
+    xSelectors = {}
+    # http://stackoverflow.com/questions/22171558/what-does-enumerate-mean
+    for compoffset, compName in enumerate(compList):
+        xSelectors[compName] = "html/body/form/table[1]/tbody/tr[{}]/td[9]/select".format(compoffset)
+
     xBuyButton      = "html/body/form/table[3]/tbody/tr/td[1]/input"
     xCredits        = "html/body/p[1]"
     xResultsBanner  = "html/body/table/tbody/tr[1]/td/font/strong"
@@ -44,9 +49,6 @@ def specialPort(purchaseDict):
         print("Unhandled Error #2 in specialPort")
         exit(1)
 
-    # hack
-    bnw.onBlurFix()
-
     # determine how many credits are available for spending
     textBlob = bnw.textFromElement(xCredits)
     # regex out the cost
@@ -56,32 +58,22 @@ def specialPort(purchaseDict):
         print("Unable to regex the available credits!")
         exit(1)
     creditAvailable = int(m.group(1).replace(",",""))
-
-    requestedEngineTech = purchaseDict["engineTech"]
-    requestedComputerTech = purchaseDict["computerTech"]
-    requestedHullTech = purchaseDict["hullTech"]
-
-    # set the requested tech drop downs
-    currentEngineTech = bnw.selectedValue(xEnginesSelect)
-    currentComputerTech = bnw.selectedValue(xComputerSelect)
-    currentHullTech = bnw.selectedValue(xHullSelect)
-
     print("Credits available: {}".format(creditAvailable))
-    print("Current Engine Tech: {}, Req Engine Tech: {}".format(currentEngineTech, requestedEngineTech, ))
-    print("Current Computer Tech: {}, Req Computer Tech: {}".format(currentComputerTech, requestedComputerTech))
-    print("Current Hull Tech: {}, Req Hull Tech: {}".format(currentHullTech, requestedHullTech))
 
-    if requestedEngineTech != currentEngineTech:
-        if not bnw.selectDropDownNew(xEnginesSelect, requestedEngineTech):
-            print("Unable to select the requested engine tech value")
+    # get the current tech levels
+    currentTech = {}
+    desiredTech = {}
+    for compName in compList:
+        if compName in purchaseDict:
+            currentTech[compName] = int(bnw.selectedValue(xSelectors[compName]))
+            desiredTech[compName] = purchaseDict(compName)
+            print("Current {} Tech: {}, Desired {} Tech: {}".format(currentTech[compName], desiredTech[compName]))
 
-    if requestedComputerTech != currentComputerTech:
-        if not bnw.selectDropDownNew(xComputerSelect, requestedComputerTech):
-            print("Unable to select the requested computer tech value")
+            if desiredTech[compName] != currentTech[compName]:
+                if not bnw.selectDropDownNew(xSelectors[compName], desiredTech[compName]):
+                    print("Unable to select the requested {} tech value".format(compName))
+                    exit(1)
 
-    if requestedHullTech != currentHullTech:
-        if not bnw.selectDropDownNew(xHullSelect, requestedHullTech):
-            print("Unable to select the requested hull tech value")
 
     print("Attempting to execute the purchase")
     if not bnw.clickButton(xBuyButton):

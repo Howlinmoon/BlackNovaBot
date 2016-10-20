@@ -154,8 +154,8 @@ def getShipStatus():
     xCredits = "html/body/div[1]/table[1]/tbody/tr/td[3]/strong"
     xHolds   = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[1]/td[2]/strong"
     xEnergy  = "html/body/div[1]/table[2]/tbody/tr/td[3]/table/tbody/tr[1]/td[2]/strong"
-
     xAverageTechLevel = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[12]/td[2]"
+
     shipStatus = {}
     if debug:
         print("Attempting to extract the ship tech levels and other status")
@@ -216,9 +216,6 @@ def getShipStatus():
         exit(1)
     shipStatus["Average tech level"] = averageTechLevel
 
-    xCredits = "html/body/div[1]/table[1]/tbody/tr/td[3]/strong"
-    xHolds   = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[1]/td[2]/strong"
-    xEnergy  = "html/body/div[1]/table[2]/tbody/tr/td[3]/table/tbody/tr[1]/td[2]/strong"
 
     shipCredits = bnw.textFromElement(xCredits)
     if shipCredits == "DONTEXIST":

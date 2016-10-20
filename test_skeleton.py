@@ -507,7 +507,9 @@ while True:
 
     totalCost = engineCost + hullCost + computerCost
     if totalCost > playerStatus['money']:
+        print("Cost for upgrades: {}, Credits available: {}".format(totalCost, playerStatus['money']))
         print("Not enough credits for the upgrades")
+        exit(1)
         continue
 
     else:

@@ -105,3 +105,6 @@ the cost ourself, or implement a scripting work-around...
 
 2016/10/14 - Unable to address the JS rendered cost, so implemented our own cost check prior to
 attempting the purchase.
+
+2016/10/20 - Refactored the Special Port tech purchase to efficiently select all available ship component
+tech levels.  In the process of redoing the skeleton decision making process.
