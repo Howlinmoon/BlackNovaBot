@@ -51,7 +51,7 @@ def getStatus():
         print("The current money xpath is incorrect")
         exit(1)
     else:
-        playerStatus['money'] = int(money.replace(',',''))
+        playerStatus['credits'] = int(money.replace(',',''))
 
     if debug:
         print('Querying current score')
@@ -239,3 +239,35 @@ def getShipStatus():
     bnw.loadPage(mainPage)
 
     return shipStatus
+
+# Display and parse the planet status page
+def getPlanetStatus():
+    debug = True
+    xBanner  = "html/body/h1"
+    xPlanetStatus = "html/body/div[1]"
+
+    planetStatus = {}
+    if debug:
+        print("Attempting to extract the owned planet status")
+    # retrieve the current page
+    currentPage = bnw.getPage()
+    baseURL = ('/').join(currentPage.split('/')[:-1])
+    planetStatusPage = "{}/planet_report.php".format(baseURL)
+    mainPage = "{}/main.php".format(baseURL)
+    bnw.loadPage(planetStatusPage)
+    time.sleep(2)
+    bannerText = bnw.textFromElement(xBanner)
+    if bannerText == "DONTEXIST":
+        print("Unable to load planet status page")
+        exit(1)
+    if bannerText != "Planet Report: Status":
+        print("Unexpected Banner Text: {}".format(bannerText))
+        exit(1)
+    # retrieve the planet stats
+    if debug:
+        print("Retrieving planet stats")
+    planetBlob = bnw.textFromElement(xPlanetStatus)
+    if "You have no planets so far" in planetBlob:
+        bnw.loadPage(mainPage)
+        return planetStatus
+

@@ -6,9 +6,21 @@ import re
 def specialPort(purchaseDict):
     specialText = "Special Port"
     genericText = "Trading Commodities"
-    xBanner         = "html/body/h1"
-    xWholePage      = "html/body"
-
+    xBanner          = "html/body/h1"
+    xWholePage       = "html/body"
+    # cost of the tech, Quantity on hand, input box for purchasing more
+    xGenesisTorps    = ["html/body/form/table[1]/tbody/tr[2]/td[2]", "html/body/form/table[1]/tbody/tr[2]/td[3]", "html/body/form/table[1]/tbody/tr[2]/td[5]/input"]
+    xSpaceBeacons    = ["html/body/form/table[1]/tbody/tr[3]/td[2]", "html/body/form/table[1]/tbody/tr[3]/td[3]", "html/body/form/table[1]/tbody/tr[3]/td[5]/input"]
+    xEmerWarpDev     = ["html/body/form/table[1]/tbody/tr[4]/td[2]", "html/body/form/table[1]/tbody/tr[4]/td[3]", "html/body/form/table[1]/tbody/tr[4]/td[5]/input"]
+    xWarpEditors     = ["html/body/form/table[1]/tbody/tr[5]/td[2]", "html/body/form/table[1]/tbody/tr[5]/td[3]", "html/body/form/table[1]/tbody/tr[5]/td[5]/input"]
+    xMineDeflectors  = ["html/body/form/table[1]/tbody/tr[7]/td[2]", "html/body/form/table[1]/tbody/tr[7]/td[3]", "html/body/form/table[1]/tbody/tr[7]/td[5]/input"]
+    xFighters        = ["html/body/form/table[2]/tbody/tr[2]/td[2]", "html/body/form/table[2]/tbody/tr[2]/td[3]", "html/body/form/table[2]/tbody/tr[2]/td[5]/input"]
+    xArmorPoints     = ["html/body/form/table[2]/tbody/tr[3]/td[2]", "html/body/form/table[2]/tbody/tr[3]/td[3]", "html/body/form/table[2]/tbody/tr[3]/td[5]/input"]
+    xEscapePod       = ["html/body/form/table[1]/tbody/tr[8]/td[2]", "html/body/form/table[1]/tbody/tr[8]/td[3]", "html/body/form/table[1]/tbody/tr[8]/td[5]/input"]
+    xFuelScoop       = ["html/body/form/table[1]/tbody/tr[9]/td[2]", "html/body/form/table[1]/tbody/tr[9]/td[3]", "html/body/form/table[1]/tbody/tr[9]/td[5]/input"]
+    xLastShipSeenDev = ["html/body/form/table[1]/tbody/tr[10]/td[2]", "html/body/form/table[1]/tbody/tr[10]/td[3]", "html/body/form/table[1]/tbody/tr[10]/td[5]/input"]
+    xTorpedoes       = ["html/body/form/table[2]/tbody/tr[2]/td[7]", "html/body/form/table[2]/tbody/tr[2]/td[8]", "html/body/form/table[2]/tbody/tr[2]/td[10]/input"]
+    xColonists       = ["html/body/form/table[2]/tbody/tr[3]/td[6]", "html/body/form/table[2]/tbody/tr[3]/td[8]", "html/body/form/table[2]/tbody/tr[3]/td[10]/input"]
     compList = ["Hull", "Engines", "Power", "Computer", "Sensors", "Beam Weapons",
                      "Armor", "Cloak", "Torpedo launchers", "Shields"]
     xSelectors = {}
