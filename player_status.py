@@ -147,16 +147,51 @@ def getStatus():
 
     return playerStatus
 
+# convert string value to either INT or a Float
+# taken from: http://stackoverflow.com/questions/379906/parse-string-to-float-or-int
+def toNumber(aString):
+    try:
+        return int(aString)
+    except ValueError:
+        return float(aString)
+
 # Display and parse the ship status page
 def getShipStatus():
     debug = True
-    xBanner  = "html/body/h1"
-    xCredits = "html/body/div[1]/table[1]/tbody/tr/td[3]/strong"
-    xHolds   = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[1]/td[2]/strong"
-    xEnergy  = "html/body/div[1]/table[2]/tbody/tr/td[3]/table/tbody/tr[1]/td[2]/strong"
-    xAverageTechLevel = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[12]/td[2]"
-
     shipStatus = {}
+
+    xBanner           = "html/body/h1"
+    xCredits          = "html/body/div[1]/table[1]/tbody/tr/td[3]/strong"
+    xHolds            = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[1]/td[2]/strong"
+    xEnergy           = "html/body/div[1]/table[2]/tbody/tr/td[3]/table/tbody/tr[1]/td[2]/strong"
+    xAverageTechLevel = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[12]/td[2]"
+    xHull             = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[2]/td[2]"
+    xEngines          = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[3]/td[2]"
+    xPower            = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[3]/td[2]"
+    xComputer         = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[5]/td[2]"
+    xSensors          = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[6]/td[2]"
+    xArmor            = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[7]/td[2]"
+    xShields          = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[8]/td[2]"
+    xBeamWeapons      = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[9]/td[2]"
+    xTorpedoLaunchers = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[10]/td[2]"
+    xCloak            = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[11]/td[2]"
+    xOre              = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[2]/td[2]"
+    xOrganics         = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[3]/td[2]"
+    xGoods            = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[4]/td[2]"
+    xColonists        = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[5]/td[2]"
+    xSpaceBeacons     = "html/body/div[1]/table[2]/tbody/tr/td[3]/table/tbody/tr[4]/td[2]"
+    xWarpEditors      = "html/body/div[1]/table[2]/tbody/tr/td[3]/table/tbody/tr[5]/td[2]"
+    xGenesisTorpedoes = "html/body/div[1]/table[2]/tbody/tr/td[3]/table/tbody/tr[6]/td[2]"
+    xMineDeflectors   = "html/body/div[1]/table[2]/tbody/tr/td[3]/table/tbody/tr[7]/td[2]"
+    xEmergencyWarpDev = "html/body/div[1]/table[2]/tbody/tr/td[3]/table/tbody/tr[8]/td[2]"
+    simples = [
+        ["Average tech level", xAverageTechLevel], ["Hull", xHull], ["Engines", xEngines], ["Power", xPower],
+        ["Computer", xComputer], ["Sensors", xSensors], ["Armor", xArmor], ["Shields", xShields],
+        ["Beam Weapons", xBeamWeapons], ["Torpedo launchers", xTorpedoLaunchers], ["Cloak", xCloak],
+        ["Ore", xOre], ["Organics", xOrganics], ["Goods", xGoods], ["Colonists", xColonists],
+        ["Space Beacons", xSpaceBeacons], ["Warp Editors", xWarpEditors], ["Genesis Torpedoes", xGenesisTorpedoes],
+        ["Mine Deflectors", xMineDeflectors], ["Emergency Warp Device", xEmergencyWarpDev]
+    ]
     if debug:
         print("Attempting to extract the ship tech levels and other status")
     # retrieve the current page
@@ -173,9 +208,18 @@ def getShipStatus():
     if bannerText != "Ship Report":
         print("Unexpected Banner Text: {}".format(bannerText))
         exit(1)
-    # retrieve the ship stats
-    if debug:
-        print("Retrieving ship stats")
+
+    for currentSimple in simples:
+        itemName = currentSimple[0]
+        itemXpath = currentSimple[1]
+        rawValue = bnw.textFromElement(itemXpath)
+        if rawValue == "DONTEXIST":
+            print("xpath is incorrect for {}".format(itemName))
+            exit(1)
+        value = toNumber(rawValue.replace('Level ','').replace(',',''))
+        shipStatus[itemName] = value
+    print(shipStatus)
+    exit(1)
 
     itemList = []
     for tr in range(2, 12):
@@ -214,6 +258,7 @@ def getShipStatus():
     if averageTechLevel == "DONTEXIST":
         print("Unable to extract average tech level")
         exit(1)
+    averageTechLevel = toNumber(averageTechLevel.replace('Level ',''))
     shipStatus["Average tech level"] = averageTechLevel
 
 
@@ -221,19 +266,24 @@ def getShipStatus():
     if shipCredits == "DONTEXIST":
         print("Unable to extract credits")
         exit(1)
+    shipCredits = toNumber(shipCredits.replace('Credits: ','').replace(',',''))
     shipStatus["Credits"] = shipCredits
 
-    shipHolds = bnw.textFromElement(xHolds)
-    if shipHolds == "DONTEXIST":
+    rawHolds = bnw.textFromElement(xHolds)
+    if rawHolds == "DONTEXIST":
         print("Unable to extract holds")
         exit(1)
-    shipStatus["Holds"] = shipHolds
+    holdStatus = rawHolds.replace(',','').split('/')
+    shipStatus["Holds"] = toNumber(holdStatus[0])
+    shipStatus["HoldsMax"] = toNumber(holdStatus[1])
 
-    shipEnergy = bnw.textFromElement(xEnergy)
-    if shipEnergy == "DONTEXIST":
+    rawEnergy = bnw.textFromElement(xEnergy)
+    if rawEnergy == "DONTEXIST":
         print("Unable to extract energy")
         exit(1)
-    shipStatus["Energy"] = shipEnergy
+    energyStatus = rawEnergy.replace(',','').split('/')
+    shipStatus["Energy"] = toNumber(energyStatus[0])
+    shipStatus["EnergyMax"] = toNumber(energyStatus[1])
 
     # return to the main page
     bnw.loadPage(mainPage)
