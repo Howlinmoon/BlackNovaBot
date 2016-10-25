@@ -18,7 +18,9 @@ def changePasswd(currentPass, newPass):
     # retrieve the current page
     currentPage = bnw.getPage()
     baseURL = ('/').join(currentPage.split('/')[:-1])
-    optionPage = "http://{}/options.php".format(baseURL)
+    print("baseURL: {}".format(baseURL))
+    optionPage = "{}/options.php".format(baseURL)
+    print("optionPage: {}".format(optionPage))
     bnw.loadPage(optionPage)
     time.sleep(2)
     bannerText = bnw.textFromElement(xBanner)

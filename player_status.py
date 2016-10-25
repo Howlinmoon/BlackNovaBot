@@ -155,9 +155,26 @@ def toNumber(aString):
     except ValueError:
         return float(aString)
 
+# handle the 'current'/'max' values
+def currentMax(xpath):
+    rawValue = bnw.textFromElement(xpath)
+    if rawValue == "DONTEXIST":
+        print("currentMax was passed a bad xpath")
+        exit(1)
+    rawList = rawValue.replace(',','').split('/')
+    return (toNumber(rawList[0]), toNumber(rawList[1]))
+
+# handle the 'Yes' or 'No' values
+def yesOrNo(xpath):
+    rawValue = bnw.textFromElement(xpath)
+    if rawValue == "Yes":
+        return True
+    else:
+        return False
+
 # Display and parse the ship status page
 def getShipStatus():
-    debug = True
+    debug = False
     shipStatus = {}
 
     xBanner           = "html/body/h1"
@@ -184,6 +201,13 @@ def getShipStatus():
     xGenesisTorpedoes = "html/body/div[1]/table[2]/tbody/tr/td[3]/table/tbody/tr[6]/td[2]"
     xMineDeflectors   = "html/body/div[1]/table[2]/tbody/tr/td[3]/table/tbody/tr[7]/td[2]"
     xEmergencyWarpDev = "html/body/div[1]/table[2]/tbody/tr/td[3]/table/tbody/tr[8]/td[2]"
+    xArmorPoints      = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[8]/td[2]"
+    xFighters         = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[9]/td[2]"
+    xTorpedoes        = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[10]/td[2]"
+    xEscapePod        = "html/body/div[1]/table[2]/tbody/tr/td[3]/table/tbody/tr[9]/td[2]"
+    xFuelScoop        = "html/body/div[1]/table[2]/tbody/tr/td[3]/table/tbody/tr[10]/td[2]"
+    xLastSeenShipDev  = "html/body/div[1]/table[2]/tbody/tr/td[3]/table/tbody/tr[11]/td[2]"
+
     simples = [
         ["Average tech level", xAverageTechLevel], ["Hull", xHull], ["Engines", xEngines], ["Power", xPower],
         ["Computer", xComputer], ["Sensors", xSensors], ["Armor", xArmor], ["Shields", xShields],
@@ -213,81 +237,34 @@ def getShipStatus():
         itemName = currentSimple[0]
         itemXpath = currentSimple[1]
         rawValue = bnw.textFromElement(itemXpath)
+        if debug:
+            print("itemName: {}, rawValue: {}".format(itemName, rawValue))
         if rawValue == "DONTEXIST":
             print("xpath is incorrect for {}".format(itemName))
             exit(1)
         value = toNumber(rawValue.replace('Level ','').replace(',',''))
         shipStatus[itemName] = value
-    print(shipStatus)
-    exit(1)
 
-    itemList = []
-    for tr in range(2, 12):
-        xItem = "html/body/div[1]/table[2]/tbody/tr/td[1]/table/tbody/tr[{}]".format(tr)
-        itemList.append(xItem)
+    # current / max handling
+    shipStatus["Holds"],    shipStatus["HoldsMax"]     = currentMax(xHolds)
+    shipStatus["Energy"],   shipStatus["EnergyMax"]    = currentMax(xEnergy)
+    shipStatus["Armor"],    shipStatus["ArmorMax"]     = currentMax(xArmorPoints)
+    shipStatus["Fighters"], shipStatus["FightersMax"]  = currentMax(xFighters)
+    shipStatus["Torpedoes"],shipStatus["TorpedoesMax"] = currentMax(xTorpedoes)
+    # Yes / No handling
+    shipStatus["EscapePod"] = yesOrNo(xEscapePod)
+    shipStatus["FuelScoop"] = yesOrNo(xFuelScoop)
+    shipStatus["LastShipSeenDev"] = yesOrNo(xLastSeenShipDev)
 
-    for tr in range(2, 6):
-        xItem = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[{}]".format(tr)
-        itemList.append(xItem)
-
-    for tr in range(8, 11):
-        xItem = "html/body/div[1]/table[2]/tbody/tr/td[2]/table/tbody/tr[{}]".format(tr)
-        itemList.append(xItem)
-
-    for tr in range(4, 12):
-        xItem = "html/body/div[1]/table[2]/tbody/tr/td[3]/table/tbody/tr[{}]".format(tr)
-        itemList.append(xItem)
-
-    for currentItem in itemList:
-        xItemName = currentItem + "/td[1]"
-        xItemValue = currentItem + "/td[2]"
-        itemName = bnw.textFromElement(xItemName)
-        itemValue = bnw.textFromElement(xItemValue)
-        if itemName == "DONTEXIST" or itemValue == "DONTEXIST":
-            print("ERROR extracting currentItem: {}".format(currentItem))
-            print("itemName: {}, itemValue: {}".format(itemName, itemValue))
-            exit(1)
-        if debug:
-            print("itemName: {}, itemValue: {}".format(itemName, itemValue))
-        if "Level " in itemValue:
-            itemValue = itemValue.replace('Level ','')
-        shipStatus[itemName] = itemValue
-
-    # grab non-conformance stats
-    averageTechLevel = bnw.textFromElement(xAverageTechLevel)
-    if averageTechLevel == "DONTEXIST":
-        print("Unable to extract average tech level")
+    # finally, grab the credits also
+    rawValue = bnw.textFromElement(xCredits)
+    if rawValue == "DONTEXIST":
+        print("xpath is incorrect for credits")
         exit(1)
-    averageTechLevel = toNumber(averageTechLevel.replace('Level ',''))
-    shipStatus["Average tech level"] = averageTechLevel
-
-
-    shipCredits = bnw.textFromElement(xCredits)
-    if shipCredits == "DONTEXIST":
-        print("Unable to extract credits")
-        exit(1)
-    shipCredits = toNumber(shipCredits.replace('Credits: ','').replace(',',''))
-    shipStatus["Credits"] = shipCredits
-
-    rawHolds = bnw.textFromElement(xHolds)
-    if rawHolds == "DONTEXIST":
-        print("Unable to extract holds")
-        exit(1)
-    holdStatus = rawHolds.replace(',','').split('/')
-    shipStatus["Holds"] = toNumber(holdStatus[0])
-    shipStatus["HoldsMax"] = toNumber(holdStatus[1])
-
-    rawEnergy = bnw.textFromElement(xEnergy)
-    if rawEnergy == "DONTEXIST":
-        print("Unable to extract energy")
-        exit(1)
-    energyStatus = rawEnergy.replace(',','').split('/')
-    shipStatus["Energy"] = toNumber(energyStatus[0])
-    shipStatus["EnergyMax"] = toNumber(energyStatus[1])
-
+    value = toNumber(rawValue.replace(',', '').replace('Credits:',''))
+    shipStatus["Credits"] = value
     # return to the main page
     bnw.loadPage(mainPage)
-
     return shipStatus
 
 # Display and parse the planet status page

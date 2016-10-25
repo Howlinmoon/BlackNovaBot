@@ -257,7 +257,7 @@ if not loginResults[0] == "SUCCESS":
             exit(1)
 
         print("Logged in - now to change the password...")
-        chgPassResults = options.changePasswd(serverPass, playerPassword, gameURL)
+        chgPassResults = options.changePasswd(serverPass, playerPassword,)
 
         if not chgPassResults[0] == "SUCCESS":
             print("Was unable to change the player password")
@@ -282,7 +282,7 @@ if not loginResults[0] == "SUCCESS":
                 exit(1)
 
             print("Logged in - now to change the password...")
-            chgPassResults = options.changePasswd(serverPass, playerPassword, gameURL)
+            chgPassResults = options.changePasswd(serverPass, playerPassword)
 
             if not chgPassResults[0] == "SUCCESS":
                 print("Was unable to change the player password")
@@ -328,7 +328,7 @@ else:
 
 # Main game loop starts here
 
-goals = {"planets": 10, "credits": 10000000000, "techLevel": 7, "traderoutes": 10 }
+goals = {"planets": 10, "credits": 10000000000, "techLevel": 20, "traderoutes": 10 }
 planetGoal = False
 creditsGoal = False
 techGoal = False
