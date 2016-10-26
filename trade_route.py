@@ -237,9 +237,9 @@ def retrieveRoutes():
             # reload the main page
             bnw.loadPage(mainPage)
             return routeList
-
+        sourcePort = int(sourcePort)
         sourceType = bnw.textFromElement(xSourceType).strip()
-        destPort = bnw.textFromElement(xDestination)
+        destPort = int(bnw.textFromElement(xDestination))
         destType = bnw.textFromElement(xDestType).strip()
 
         distance = bnw.textFromElement(xDistance)
@@ -265,13 +265,22 @@ def retrieveRoutes():
         newRoute = [sourcePort, sourceType, destPort, destType, distance, movementType, circuitType, routeId]
         routeList.append(newRoute)
 
+# checks to see if the specified sector is in the passed trade route db
+def tradeDbSearch(sectorNumber, tradeRouteDb):
+    for eachEntry in tradeRouteDb:
+        if sectorNumber == eachEntry[0] or sectorNumber == eachEntry[2]:
+            return True
+    return False
+
 # This routine starts searching for an optimal trade route from the
 # current sector.
 # if it finds one, it returns True, otherwise, it gives up and returns False
 # Pass it how many warps MAX to use (default maximum is 100), and your current Warps To Zero list
 
-def tradeRouteSearch(zeroPath, warpDB, maxTurns=100):
+def tradeRouteSearch(warpDB, maxTurns=100):
     debug = True
+    # retrieve the current trade routes ourselves
+    tradeRoutes = retrieveRoutes()
     oreSector = -1
     goodsSector = -1
     portSector = {}
@@ -280,7 +289,7 @@ def tradeRouteSearch(zeroPath, warpDB, maxTurns=100):
         if warpsUsed >= maxTurns:
             if debug:
                 print("Exceeded allotted turns")
-                return ["FAILED", warpDB, zeroPath]
+                return ["FAILED", warpDB]
 
         if debug:
             print("Trying to retrieve player status")
@@ -293,7 +302,8 @@ def tradeRouteSearch(zeroPath, warpDB, maxTurns=100):
         currentPort = playerStatus['sectorPort']
         if debug:
             print("currentPort: {}".format(currentPort))
-        if currentPort != "Ore" and currentPort != "Goods":
+        # is current port already in our trade route db - OR does it not have a tenable port?
+        if not tradeDbSearch(currentSector, tradeRoutes) and currentPort != "Ore" and currentPort != "Goods":
             if debug:
                 print("Current sector: {} does not have a desired port - need to move".format(currentSector))
             # need to find the next available sector that is higher than the current one
