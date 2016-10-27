@@ -159,8 +159,7 @@ def initialRoute(warpDB):
             else:
                 print("Still need to move further away!")
 
-        print("Starting search for a trade route from: {}".format(randomWarp))
-
+    print("Starting search for a trade route")
     searchResults = trade.tradeRouteSearch(warpDB, 100)
     print("searchResults: {}".format(searchResults))
     searchStatus = searchResults[0]
@@ -168,32 +167,10 @@ def initialRoute(warpDB):
         print("Failed to find a trade route")
         exit(1)
     else:
-        # ['SUCCESS', portSector, warpDB, zeroPath]
-        portDict = searchResults[1]
+        # ['SUCCESS', tradeRoutes, warpDB]
+        tradeRoutes = searchResults[1]
         warpDB = searchResults[2]
-        warpsFromZero = searchResults[3]
-        currentSector = warpsFromZero[-1]
-        port1 = currentSector
-        goodsPort = portDict['Goods']
-        orePort = portDict['Ore']
-        if goodsPort == int(currentSector):
-            port2 = orePort
-        elif orePort == int(currentSector):
-            port2 = goodsPort
-        else:
-            print('Whoah! - Something is wrong here...')
-            exit(1)
-        print("Attempting to create the trade route linkage")
-        trCreateStatus = trade.createRoute(port1, port2, bidir=True , warp=True)
-        if not trCreateStatus:
-            print("Was unable to create the specified trade route")
-            exit(1)
-        else:
-            print("Successfully created a trade route!")
-            # update the trade routes
-            tradeRoutes = trade.retrieveRoutes()
-            return [tradeRoutes, warpDB]
-
+        return [warpDB, tradeRoutes]
 
 ###########################################################
 ## MAIN ENTRY
@@ -387,12 +364,28 @@ print(shipStatus)
 if not tradeGoal:
     needRoutes = goals["traderoutes"] - numRoutes
     print("Attempting to establish {} trade routes".format(needRoutes))
-    for routeNumber in range(1, 3):
-        print("Working on trade route #{}".format(routeNumber))
+    if numRoutes == 0:
+        print("Working on initial trade route")
+        #return [warpDB, tradeRoutes]
         createResults = initialRoute(warpDB)
-        tradeRoutes = createResults[0]
-        warpDB = createResults[1]
-        print("tradeRoutes: {}".format(tradeRoutes))
+        warpDB = createResults[0]
+        tradeRoutes = createResults[1]
+        numRoutes = len(tradeRoutes)
+
+    for routeNumber in range(numRoutes + 1, numRoutes + 3):
+        print("Working on trade route #{}".format(routeNumber))
+        searchResults = trade.tradeRouteSearch(warpDB, 100)
+        print("searchResults: {}".format(searchResults))
+        searchStatus = searchResults[0]
+        if searchStatus != "SUCCESS":
+            print("Failed to find a trade route")
+            exit(1)
+        else:
+            print("Successfully established a new trade route!")
+            # ['SUCCESS', tradeRoutes, warpDB]
+            tradeRoutes = searchResults[1]
+            warpDB = searchResults[2]
+            exit(1)
 
 print("And stop")
 exit(1)

@@ -267,15 +267,21 @@ def retrieveRoutes():
 
 # checks to see if the specified sector is in the passed trade route db
 def tradeDbSearch(sectorNumber, tradeRouteDb):
+    print("tradeDbSearch is looking for sector number {} in the DB".format(sectorNumber))
     for eachEntry in tradeRouteDb:
-        if sectorNumber == eachEntry[0] or sectorNumber == eachEntry[2]:
+        port1 = int(eachEntry[0])
+        port2 = int(eachEntry[2])
+        print("searching against port1: {} and port2: {}".format(port1, port2))
+        if int(sectorNumber) == port1 or int(sectorNumber) == port2:
+            print("sector number {} already exists in the db!".format(sectorNumber))
             return True
+    print("sector number {} does not exist in the db".format(sectorNumber))
     return False
 
 # This routine starts searching for an optimal trade route from the
 # current sector.
 # if it finds one, it returns True, otherwise, it gives up and returns False
-# Pass it how many warps MAX to use (default maximum is 100), and your current Warps To Zero list
+# Pass it how many warps MAX to use (default maximum is 100)
 
 def tradeRouteSearch(warpDB, maxTurns=100):
     debug = True
@@ -303,9 +309,14 @@ def tradeRouteSearch(warpDB, maxTurns=100):
         if debug:
             print("currentPort: {}".format(currentPort))
         # is current port already in our trade route db - OR does it not have a tenable port?
-        if not tradeDbSearch(currentSector, tradeRoutes) and currentPort != "Ore" and currentPort != "Goods":
+        moveAlong = tradeDbSearch(currentSector, tradeRoutes)
+        print("The current port is already in our trade db: {}".format(moveAlong))
+
+        if currentPort != "Ore" and currentPort != "Goods":
+            moveAlong = True
+        if moveAlong:
             if debug:
-                print("Current sector: {} does not have a desired port - need to move".format(currentSector))
+                print("Current sector: {} does not have a desired port OR it's already in the DB - need to move".format(currentSector))
             # need to find the next available sector that is higher than the current one
             for newSector in warps:
                 if int(newSector) < int(currentSector):
@@ -321,7 +332,6 @@ def tradeRouteSearch(warpDB, maxTurns=100):
             else:
                 if debug:
                     print("Successfully moved to the desired sector")
-                zeroPath.append(newSector)
                 warpsUsed += 1
                 continue
 
@@ -343,6 +353,7 @@ def tradeRouteSearch(warpDB, maxTurns=100):
                 print("Checking to see if a neighboring sector contains a trading match")
                 print("We should currently be in sector: {}".format(currentSector))
                 print("Available warps: {}".format(warps))
+                port2 = int(currentSector)
 
             for currentWarp in warps:
                 scanResults = scanner.lrScan(currentWarp)
@@ -377,22 +388,25 @@ def tradeRouteSearch(warpDB, maxTurns=100):
                             currentSector = playerStatus['currentSector']
                             intWarps = [int(i) for i in warps]
                             warpDB[currentSector] = warps
+                            port1 = int(currentSector)
 
                             if debug:
                                 print("Should be able to setup a traderoute between")
                                 print("Goods Port: {} and Ore Port: {}".format(portSector["Goods"],
                                                                                portSector["Ore"]))
-                            prevSector = zeroPath[-1]
-                            if debug:
-                                print("Returning to previous sector:{} ".format(prevSector))
-                            if not bnw.moveTo(prevSector):
-                                print("Was unable to move to the previous sector: {}".format(prevSector))
-                                exit(1)
-                            warpsUsed += 1
 
                             print("Found a Trade Route!")
-                            # Return stuff here
-                            return ['SUCCESS', portSector, warpDB, zeroPath]
+                            # create the route
+                            print("Attempting to create the trade route linkage")
+                            trCreateStatus = createRoute(port1, port2, bidir=True, warp=True)
+                            if not trCreateStatus:
+                                print("Was unable to create the specified trade route")
+                                exit(1)
+                            else:
+                                print("Successfully created a trade route!")
+                                # update the trade routes
+                                tradeRoutes = retrieveRoutes()
+                                return ['SUCCESS', tradeRoutes, warpDB]
 
             if oreSector == -1 or goodsSector == -1:
                 print("Did not find a matching pair - continuing to look")
@@ -431,7 +445,6 @@ def tradeRouteSearch(warpDB, maxTurns=100):
                     exit(1)
                 else:
                     print("Successfully moved to the desired sector")
-                    zeroPath.append(newSector)
                     warpsUsed += 1
                     playerStatus = status.getStatus()
                     warps = playerStatus['warps']
