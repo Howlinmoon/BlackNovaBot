@@ -182,7 +182,7 @@ def retrieveRoutes():
     debug = False
     # XPaths
     xBanner = "html/body/h1"
-    routeList = []
+    routeList = {}
     xAnyPorts = "html/body/table/tbody/tr[3]/td[1]/font"
 
     # retrieve the current page
@@ -262,17 +262,18 @@ def retrieveRoutes():
 
         print('Route #{} From: {} (type: {}) To: {} (type: {})'.format(routeNumber, sourcePort, sourceType, destPort, destType))
         print("Distance: {}, Circuit Type: {}, Movement Type: {}, Route Id: {}".format(distance, circuitType, movementType, routeId))
-        newRoute = [sourcePort, sourceType, destPort, destType, distance, movementType, circuitType, routeId]
-        routeList.append(newRoute)
+        newRoute = {"port1":sourcePort, "port1Type":sourceType, "port2":destPort, "port2Type":destType, "distance":distance, "movementType":movementType, "circuitType":circuitType}
+        routeList[routeId] = newRoute
 
 # checks to see if the specified sector is in the passed trade route db
 def tradeDbSearch(sectorNumber, tradeRouteDb):
     print("tradeDbSearch is looking for sector number {} in the DB".format(sectorNumber))
-    for eachEntry in tradeRouteDb:
-        port1 = int(eachEntry[0])
-        port2 = int(eachEntry[2])
+    for routeId in tradeRouteDb:
+        eachEntry = tradeRouteDb[routeId]
+        port1 = eachEntry["port1"]
+        port2 = eachEntry["port2"]
         print("searching against port1: {} and port2: {}".format(port1, port2))
-        if int(sectorNumber) == port1 or int(sectorNumber) == port2:
+        if sectorNumber == port1 or sectorNumber == port2:
             print("sector number {} already exists in the db!".format(sectorNumber))
             return True
     print("sector number {} does not exist in the db".format(sectorNumber))

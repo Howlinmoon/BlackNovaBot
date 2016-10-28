@@ -42,7 +42,7 @@ def getStatus():
         print("The current sector xpath is incorrect")
         exit(1)
     else:
-        playerStatus['currentSector'] = currentSector
+        playerStatus['currentSector'] = int(currentSector)
 
     if debug:
         print('Querying current credits')

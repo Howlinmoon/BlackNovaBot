@@ -108,3 +108,6 @@ attempting the purchase.
 
 2016/10/20 - Refactored the Special Port tech purchase to efficiently select all available ship component
 tech levels.  In the process of redoing the skeleton decision making process.
+
+2016/10/28 - Slowly converting all scrape numbers from strings to ints/floats.  Fixed numerous issues with the trade route support lib
+

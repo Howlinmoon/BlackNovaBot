@@ -40,7 +40,7 @@ def gotoSectorZero(maxMoves, warpDB):
         warps = playerStatus['warps']
         intWarps = [int(i) for i in warps]
         warpDB[inSector] = warps
-        if inSector == "0":
+        if inSector == 0:
             return [True, warpDB]
         # attempt to move to the first available warp, which will be the closest to zero (theoretically)
         if len(warps) == 0:
@@ -372,7 +372,7 @@ if not tradeGoal:
         tradeRoutes = createResults[1]
         numRoutes = len(tradeRoutes)
 
-    for routeNumber in range(numRoutes + 1, numRoutes + 3):
+    for routeNumber in range(numRoutes+1, 11):
         print("Working on trade route #{}".format(routeNumber))
         searchResults = trade.tradeRouteSearch(warpDB, 100)
         print("searchResults: {}".format(searchResults))
@@ -385,11 +385,9 @@ if not tradeGoal:
             # ['SUCCESS', tradeRoutes, warpDB]
             tradeRoutes = searchResults[1]
             warpDB = searchResults[2]
-            exit(1)
 
-print("And stop")
-exit(1)
-
+tradeRoutes = trade.retrieveRoutes()
+numRoutes = len(tradeRoutes)
 turnsLeft = playerStatus["turnsLeft"]
 
 # Examine our established trade routes
@@ -400,58 +398,58 @@ routeId = -1
 currentSector = playerStatus['currentSector']
 print("Our current sector is: {}".format(currentSector))
 
-if len(tradeRoutes) == 0:
-    print("No current Trade Routes - attempting to create one")
-    createResults = initialRoute(warpDB)
-    tradeRoutes = createResults[0]
-    warpDB = createResults[1]
-
-for currentRoute in tradeRoutes:
-    port1 = currentRoute[0]
-    port2 = currentRoute[2]
-    tradeRouteTurns = currentRoute[4]
-    tempId = currentRoute[-1]
-    print("Examining Trade Route {} <=> {}".format(port1, port2))
-    shortestPath = find_shortest_path(warpDB, currentSector, port1)
-    if not shortestPath == None:
-        print("There is no direct path to the start of the Trade Route")
-        distance = len(shortestPath)
-        print("Trade Route via direct path is {} turns away".format(distance))
-        print("direct path: {}".format(shortestPath))
-        if distance < shortestRoute:
-            shortestRoute = distance
-            startRoute = port1
-            directPath = True
-            routeId = tempId
+for routeId in tradeRoutes:
+    currentRoute = tradeRoutes[routeId]
+    port1 = currentRoute["port1"]
+    port2 = currentRoute["port2"]
+    print("Current Sector: {}, Examining Trade Route {} <=> {}".format(currentSector, port1, port2))
+    # handle the case where we are sitting on a trade route
+    if currentSector == port1 or currentSector == port2:
+        shortestRoute = 0
+        directPath = True
+        bestRouteId = routeId
+        break
     else:
-        print("Querying indirect path to trade route start")
-        indirectDistance = int(trade.queryIndirectPath(currentSector, port1)[0])
-        print("Trade Route via indirect path is {} turns away".format(indirectDistance))
-        if indirectDistance < shortestRoute:
-            shortestRoute = indirectDistance
-            startRoute = port1
-            directPath = False
-            routeId = tempId
+        shortestPath = find_shortest_path(warpDB, currentSector, port1)
+        if not shortestPath == None:
+            print("There is no direct path to the start of the Trade Route")
+            distance = len(shortestPath)
+            print("Trade Route via direct path is {} turns away".format(distance))
+            print("direct path: {}".format(shortestPath))
+            if distance < shortestRoute:
+                shortestRoute = distance
+                directPath = True
+                bestRouteId = routeId
+        else:
+            print("Querying indirect path to trade route start")
+            indirectDistance = int(trade.queryIndirectPath(currentSector, port1)[0])
+            print("Trade Route via indirect path is {} turns away".format(indirectDistance))
+            if indirectDistance < shortestRoute:
+                shortestRoute = indirectDistance
+                directPath = False
+                bestRouteId = routeId
 
-print("Selected Trade Route Id {}, starting at port {}, which is {} moves away".format(routeId, startRoute, shortestRoute))
+theRoute = tradeRoutes[bestRouteId]
+print("Selected Trade Route Id {}, starting at port {}, which is {} moves away".format(bestRouteId, theRoute["port1"], shortestRoute))
 if shortestRoute == 0:
     print("Ship is already there")
 else:
     if shortestRoute > turnsLeft:
         print("Not enough turns left to travel to start of trade route.")
+        print("This is where we would log out for a while")
         exit(1)
 
     if directPath:
         print("Traveling to the start of the trade route")
-        shortestPath = find_shortest_path(warpDB, currentSector, startRoute)
+        shortestPath = find_shortest_path(warpDB, currentSector, theRoute["port1"])
         if moveVia(shortestPath):
-            print('Successfully moved to start of trade route: {}'.format(startRoute))
+            print('Successfully moved to start of trade route, sector: {}'.format(theRoute["port1"]))
         else:
-            print('Something happened attempting to move to start of trade route: {}'.format(startRoute))
+            print('Something happened attempting to move to start of trade route, sector: {}'.format(theRoute["port1"]))
             exit(1)
     else:
         print("Using a realspace jump to the start of the trade route")
-        if trade.queryIndirectPath(currentSector, startRoute, True):
+        if trade.queryIndirectPath(currentSector, theRoute["port1"], True):
             print("Jump succeeded!")
         else:
             print("Something unhandled happended during the Real Space jump...")
@@ -465,15 +463,6 @@ print(playerStatus)
 currentSector = playerStatus['currentSector']
 print("Player is currently in sector {}".format(currentSector))
 turnsLeft = playerStatus["turnsLeft"]
-
-
-shortestPath = find_shortest_path(warpDB, currentSector, '0')
-if shortestPath == None:
-    print("Unable to find a direct path to sector Zero")
-else:
-    print("warps from zero")
-    print(shortestPath)
-
 print("Warp Database")
 print(warpDB)
 
@@ -482,10 +471,12 @@ print("trade routes: {}".format(tradeRoutes))
 
 print("Saving the warpDB")
 warpsTable.insert(warpDB)
+print("Saving the trade route DB")
+warpsTable.insert(tradeRoutes)
 
 # determine how many times we can execute the trade - if less than 25
-if turnsLeft < 25 * tradeRouteTurns:
-    maxTrades = int(turnsLeft / tradeRouteTurns)
+if turnsLeft < 25 * theRoute["distance"]:
+    maxTrades = int(turnsLeft / theRoute["distance"])
     print("Can perform a maximum of {} trades".format(maxTrades))
 else:
     maxTrades = 25
