@@ -248,7 +248,7 @@ def getShipStatus():
     # current / max handling
     shipStatus["Holds"],    shipStatus["HoldsMax"]     = currentMax(xHolds)
     shipStatus["Energy"],   shipStatus["EnergyMax"]    = currentMax(xEnergy)
-    shipStatus["Armor"],    shipStatus["ArmorMax"]     = currentMax(xArmorPoints)
+    shipStatus["ArmorPts"], shipStatus["ArmorMax"]     = currentMax(xArmorPoints)
     shipStatus["Fighters"], shipStatus["FightersMax"]  = currentMax(xFighters)
     shipStatus["Torpedoes"],shipStatus["TorpedoesMax"] = currentMax(xTorpedoes)
     # Yes / No handling

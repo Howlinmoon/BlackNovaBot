@@ -402,7 +402,7 @@ for routeId in tradeRoutes:
     currentRoute = tradeRoutes[routeId]
     port1 = currentRoute["port1"]
     port2 = currentRoute["port2"]
-    print("Current Sector: {}, Examining Trade Route {} <=> {}".format(currentSector, port1, port2))
+    print("Current Sector: {}, Examining Trade Route Id {},  {} <=> {}".format(currentSector, routeId, port1, port2))
     # handle the case where we are sitting on a trade route
     if currentSector == port1 or currentSector == port2:
         shortestRoute = 0
@@ -474,14 +474,17 @@ warpsTable.insert(warpDB)
 print("Saving the trade route DB")
 warpsTable.insert(tradeRoutes)
 
+print("current trade routes")
+print(tradeRoutes)
+
 # determine how many times we can execute the trade - if less than 25
 if turnsLeft < 25 * theRoute["distance"]:
     maxTrades = int(turnsLeft / theRoute["distance"])
     print("Can perform a maximum of {} trades".format(maxTrades))
 else:
     maxTrades = 25
-print("Need to start executing trade route Id: {}".format(routeId))
-trade.executeTrade(routeId, maxTrades, True)
+print("Need to start executing trade route Id: {}".format(bestRouteId))
+trade.executeTrade(bestRouteId, maxTrades, True)
 shipStatus = status.getShipStatus()
 print("ship status")
 print(shipStatus)
@@ -489,20 +492,56 @@ playerStatus = status.getStatus()
 turnsLeft = playerStatus["turnsLeft"]
 
 # Calculate the upgrade cost prior to attempting to buy them
-currentEngines = int(shipStatus["Engines"])
-currentHull = int(shipStatus["Hull"])
-currentComputer = int(shipStatus["Computer"])
+currentHull     = shipStatus["Hull"]
+currentEngines  = shipStatus["Engines"]
+currentPower    = shipStatus["Power"]
+currentComputer = shipStatus["Computer"]
+currentSensors  = shipStatus["Sensors"]
+currentArmor    = shipStatus["Armor"]
+currentShields  = shipStatus["Shields"]
+currentBeams    = shipStatus["Beam Weapons"]
+currentTorpedo  = shipStatus["Torpedo launchers"]
+currentCloak    = shipStatus["Cloak"]
 
 
-engineCost = upgradeCost(currentEngines + 1, currentEngines)
+
 hullCost = upgradeCost(currentHull + 1, currentHull)
+engineCost = upgradeCost(currentEngines + 1, currentEngines)
+powerCost  = upgradeCost(currentPower + 1, currentPower)
 computerCost = upgradeCost(currentComputer + 1, currentComputer)
+sensorsCost = upgradeCost(currentSensors + 1, currentSensors)
+armorCost = upgradeCost(currentArmor + 1, currentArmor)
+shieldsCost = upgradeCost(currentShields + 1, currentShields)
+beamsCost = upgradeCost(currentBeams + 1, currentBeams)
+torpedoCost = upgradeCost(currentTorpedo + 1, currentTorpedo)
+cloakCost = upgradeCost(currentCloak + 1, currentCloak)
 
-print("Current Engine tech: {}, cost to upgrade: {}".format(currentEngines, engineCost))
 print("Current Hull tech: {}, cost to upgrade: {}".format(currentHull, hullCost))
+print("Current Engine tech: {}, cost to upgrade: {}".format(currentEngines, engineCost))
+print("Current Power tech: {}, cost to upgrade: {}".format(currentPower, powerCost))
 print("Current Computer tech: {}, cost to upgrade: {}".format(currentComputer, computerCost))
+print("Current Sensors tech: {}, cost to upgrade: {}".format(currentSensors, sensorsCost))
+print("Current Armor tech: {}, cost to upgrade: {}".format(currentArmor, armorCost))
+print("Current Shields tech: {}, cost to upgrade: {}".format(currentShields, shieldsCost))
+print("Current Beams tech: {}, cost to upgrade: {}".format(currentBeams, beamsCost))
+print("Current Torpedo tech: {}, cost to upgrade: {}".format(currentTorpedo, torpedoCost))
+print("Current Cloak tech: {}, cost to upgrade: {}".format(currentCloak, cloakCost))
 
-totalCost = engineCost + hullCost + computerCost
+shoppingList = {}
+
+shoppingList["Hull"] = str(currentHull + 1)
+shoppingList["Engines"] = str(currentEngines + 1)
+shoppingList["Power"] = str(currentPower + 1)
+shoppingList["Computer"] = str(currentComputer + 1)
+shoppingList["Sensors"] = str(currentSensors + 1)
+shoppingList["Armor"] = str(currentArmor + 1)
+shoppingList["Shields"] = str(currentShields + 1)
+shoppingList["Beam Weapons"] = str(currentBeams + 1)
+shoppingList["Torpedo launchers"] = str(currentTorpedo + 1)
+shoppingList["Cloak"] = str(currentCloak + 1)
+
+
+totalCost = hullCost + engineCost + powerCost + computerCost + sensorsCost + armorCost + shieldsCost + beamsCost + torpedoCost + cloakCost
 if totalCost > playerStatus['credits']:
     print("Cost for upgrades: {}, Credits available: {}".format(totalCost, playerStatus['credits']))
     print("Not enough credits for the upgrades")
@@ -534,13 +573,6 @@ else:
             exit(1)
 
     print("Now in sector Zero - attempting to make a purchase")
-    shoppingList = {}
-
-
-
-    shoppingList["engineTech"] = str(currentEngines + 1)
-    shoppingList["hullTech"] = str(currentHull + 1)
-    shoppingList["computerTech"] = str(currentComputer + 1)
 
     print("shopping list: {}".format(shoppingList))
 

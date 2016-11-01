@@ -25,7 +25,7 @@ def specialPort(purchaseDict):
                      "Armor", "Cloak", "Torpedo launchers", "Shields"]
     xSelectors = {}
     # http://stackoverflow.com/questions/22171558/what-does-enumerate-mean
-    for compoffset, compName in enumerate(compList):
+    for compoffset, compName in enumerate(compList, 2):
         xSelectors[compName] = "html/body/form/table[1]/tbody/tr[{}]/td[9]/select".format(compoffset)
 
     xBuyButton      = "html/body/form/table[3]/tbody/tr/td[1]/input"
@@ -77,9 +77,10 @@ def specialPort(purchaseDict):
     desiredTech = {}
     for compName in compList:
         if compName in purchaseDict:
-            currentTech[compName] = int(bnw.selectedValue(xSelectors[compName]))
-            desiredTech[compName] = purchaseDict(compName)
-            print("Current {} Tech: {}, Desired {} Tech: {}".format(currentTech[compName], desiredTech[compName]))
+            xpath = xSelectors[compName]
+            currentTech[compName] = int(bnw.selectedValue(xpath))
+            desiredTech[compName] = purchaseDict[compName]
+            print("Current {} Tech: {}, Desired Tech: {}".format(compName, currentTech[compName], desiredTech[compName]))
 
             if desiredTech[compName] != currentTech[compName]:
                 if not bnw.selectDropDownNew(xSelectors[compName], desiredTech[compName]):
@@ -120,5 +121,6 @@ def specialPort(purchaseDict):
         print("Unable to regex the final cost")
         exit(1)
     finalCost = int(m.group(1).replace(",",""))
+    print("final cost: {}".format(finalCost))
     bnw.loadPage(mainPage)
     return ["SUCCESS", finalCost]
